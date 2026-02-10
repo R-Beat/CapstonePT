@@ -148,8 +148,8 @@
                 <input type="text" name="name" required>
             </div>
             <div class="form-group">
-                <label>Quantity:</label>
-                <input type="number" name="quantity" min="0" required>
+                <label>Total Quantity:</label>
+                <input type="number" name="total_quantity" min="0" required>
             </div>
             <button type="submit">Add Equipment</button>
         </form>
@@ -157,16 +157,16 @@
         <h3>Current Inventory</h3>
         {% if items %}
             <ul class="inventory-list">
-                {% for id, name, qty in items %}
+                {% for id, name, total_qty, available_qty in items %}
                     <li>
                         <span class="item-name">{{ name }}</span>
-                        <span>{{ qty }} pcs</span>
+                        <span>Total: {{ total_qty }} | Available: {{ available_qty }}</span>
                         <div class="item-actions">
                             <form method="POST" style="display:flex; gap: 5px; align-items: center;">
-                                <input type="hidden" name="action" value="update">
+                                <input type="hidden" name="action" value="update_total">
                                 <input type="hidden" name="item_id" value="{{ id }}">
-                                <input type="number" name="quantity" value="{{ qty }}" min="0">
-                                <button type="submit">Update</button>
+                                <input type="number" name="total_quantity" value="{{ total_qty }}" min="0" placeholder="Total">
+                                <button type="submit">Update Total</button>
                             </form>
                             <form method="POST" style="display:inline;">
                                 <input type="hidden" name="action" value="delete">

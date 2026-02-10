@@ -56,6 +56,7 @@ def init_db():
         CREATE TABLE IF NOT EXISTS inventory (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT UNIQUE NOT NULL,
+            total_quantity INTEGER DEFAULT 0,
             quantity INTEGER DEFAULT 0
         )
     ''')
@@ -72,6 +73,14 @@ def init_db():
     except:
         pass
     
+    # Add total_quantity column if it doesn't exist (migrate existing data)
+    try:
+        c.execute("ALTER TABLE inventory ADD COLUMN total_quantity INTEGER DEFAULT 0")
+        # For existing items, set total_quantity equal to current quantity
+        c.execute("UPDATE inventory SET total_quantity = quantity WHERE total_quantity = 0")
+    except:
+        pass
+    
     conn.commit()
     conn.close()
 
@@ -79,13 +88,13 @@ def init_db():
 def get_inventory():
     conn = sqlite3.connect("database.db")
     c = conn.cursor()
-    c.execute("SELECT id, name, quantity FROM inventory ORDER BY name ASC")
+    c.execute("SELECT id, name, total_quantity, quantity FROM inventory ORDER BY name ASC")
     items = c.fetchall()
     conn.close()
     return items
 
 def get_inventory_dict():
-    """Return dict: equipment_name -> quantity"""
+    """Return dict: equipment_name -> available quantity"""
     conn = sqlite3.connect("database.db")
     c = conn.cursor()
     c.execute("SELECT name, quantity FROM inventory")
@@ -366,20 +375,29 @@ def inventory():
         action = request.form.get('action')
         if action == 'add':
             name = request.form['name'].strip()
-            quantity = int(request.form['quantity'])
+            total_quantity = int(request.form['total_quantity'])
             if name:
                 try:
-                    c.execute("INSERT INTO inventory (name, quantity) VALUES (?, ?)", (name, quantity))
+                    c.execute("INSERT INTO inventory (name, total_quantity, quantity) VALUES (?, ?, ?)", (name, total_quantity, total_quantity))
                     conn.commit()
                     flash("Equipment added successfully.")
                 except sqlite3.IntegrityError:
                     flash("Equipment already exists.")
-        elif action == 'update':
+        elif action == 'update_total':
             item_id = request.form['item_id']
-            quantity = int(request.form['quantity'])
-            c.execute("UPDATE inventory SET quantity=? WHERE id=?", (quantity, item_id))
-            conn.commit()
-            flash("Quantity updated.")
+            total_quantity = int(request.form['total_quantity'])
+            # Get current borrowed quantity
+            c.execute("SELECT total_quantity, quantity FROM inventory WHERE id=?", (item_id,))
+            row = c.fetchone()
+            if row:
+                old_total = row[0]
+                available = row[1]
+                # Calculate new available based on difference in total
+                difference = total_quantity - old_total
+                new_available = available + difference
+                c.execute("UPDATE inventory SET total_quantity=?, quantity=? WHERE id=?", (total_quantity, new_available, item_id))
+                conn.commit()
+                flash("Total quantity updated.")
         elif action == 'delete':
             item_id = request.form['item_id']
             c.execute("DELETE FROM inventory WHERE id=?", (item_id,))
@@ -387,7 +405,7 @@ def inventory():
             flash("Equipment deleted.")
         return redirect(url_for('inventory'))
 
-    c.execute("SELECT id, name, quantity FROM inventory ORDER BY name ASC")
+    c.execute("SELECT id, name, total_quantity, quantity FROM inventory ORDER BY name ASC")
     items = c.fetchall()
     conn.close()
     return render_template('inventory.html', items=items)

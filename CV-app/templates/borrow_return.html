@@ -467,8 +467,8 @@
 
         // Build inventory object from Flask template data
         const inventoryData = `{
-            {%- for id, name, qty in inventory %}
-            "{{ name }}": {{ qty }}{{ "," if not loop.last else "" }}
+            {%- for id, name, total_qty, available_qty in inventory %}
+            "{{ name }}": {{ available_qty }}{{ "," if not loop.last else "" }}
             {%- endfor %}
         }`;
         const inventory = JSON.parse(inventoryData);
@@ -483,8 +483,8 @@
                     <label>Equipment</label>
                     <select name="equipment_names" class="equipment-select" onchange="updateInventoryStatus()" required>
                         <option value="">-- Select Equipment --</option>
-                        {% for id, name, qty in inventory %}
-                            <option value="{{ name }}" data-available="{{ qty }}">{{ name }}</option>
+                        {% for id, name, total_qty, available_qty in inventory %}
+                            <option value="{{ name }}" data-available="{{ available_qty }}">{{ name }}</option>
                         {% endfor %}
                     </select>
                     <div class="available-qty" id="available-${itemCount}"></div>

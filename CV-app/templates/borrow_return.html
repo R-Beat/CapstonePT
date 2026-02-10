@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Borrow/Return Equipment</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .container {
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 20px;
+        }
+        .header {
+            margin-bottom: 30px;
+        }
+        .header h2 {
+            color: #333;
+            margin: 0 0 5px 0;
+        }
+        .header p {
+            color: #666;
+            margin: 0;
+        }
+        .alert {
+            padding: 15px 20px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            border-left: 4px solid;
+        }
+        .alert-danger {
+            background: #f8d7da;
+            color: #721c24;
+            border-color: #f5c6cb;
+        }
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border-color: #ffeaa7;
+        }
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border-color: #c3e6cb;
+        }
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border-color: #bee5eb;
+        }
+        .flash {
+            display: none;
+        }
+        .form-section {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0,123,255,0.25);
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .equipment-list-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin: 25px 0 15px 0;
+        }
+        .equipment-item {
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 12px;
+            display: grid;
+            grid-template-columns: 2fr 1fr auto;
+            gap: 10px;
+            align-items: flex-end;
+        }
+        .equipment-item select,
+        .equipment-item input {
+            margin: 0;
+        }
+        .item-field {
+            display: flex;
+            flex-direction: column;
+        }
+        .item-field label {
+            font-weight: 600;
+            color: #555;
+            font-size: 12px;
+            margin-bottom: 4px;
+        }
+        .item-field input,
+        .item-field select {
+            margin: 0;
+        }
+        .available-qty {
+            font-size: 12px;
+            color: #666;
+            margin-top: 3px;
+        }
+        .remove-item {
+            background: #d9534f;
+            color: white;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .remove-item:hover {
+            background: #c9302c;
+        }
+        .add-equipment-btn {
+            background: #5cb85c;
+            color: white;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+        .add-equipment-btn:hover {
+            background: #4cae4c;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+        }
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-submit {
+            background: #007bff;
+            color: white;
+            flex: 1;
+        }
+        .btn-submit:hover {
+            background: #0056b3;
+        }
+        .btn-submit:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .btn-back {
+            background: #6c757d;
+            color: white;
+        }
+        .btn-back:hover {
+            background: #545b62;
+        }
+        .validation-error {
+            color: #721c24;
+            font-size: 12px;
+            margin-top: 4px;
+            display: none;
+        }
+        .validation-error.show {
+            display: block;
+        }
+        .inventory-check {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-size: 13px;
+        }
+        .inventory-check strong {
+            color: #004085;
+        }
+        .inventory-status {
+            margin-top: 10px;
+            color: #004085;
+        }
+        .inventory-status.warning {
+            color: #856404;
+        }
+        .camera-section {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .camera-btn {
+            background: #17a2b8;
+            color: white;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .camera-btn:hover {
+            background: #138496;
+        }
+        #camera, #canvas {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .confirmation-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .confirmation-modal.show {
+            display: flex;
+        }
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            max-width: 500px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        .modal-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        .modal-body {
+            margin-bottom: 20px;
+            color: #666;
+            line-height: 1.6;
+        }
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        .modal-buttons .btn {
+            margin: 0;
+        }
+        .detected-equipment-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .detected-equipment-table thead {
+            background: #f5f5f5;
+            border-bottom: 2px solid #ddd;
+        }
+        .detected-equipment-table th {
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+        .detected-equipment-table td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+        }
+        .detected-equipment-table tbody tr:hover {
+            background: #f9f9f9;
+        }
+        .hr {
+            border: none;
+            border-top: 2px solid #ddd;
+            margin: 30px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Borrow / Return Equipment</h2>
+            <p>Select equipment items and quantities for borrowing or returning</p>
+        </div>
+
+        <!-- Flash Messages as Alerts -->
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for msg in messages %}
+                    <div class="alert alert-danger">{{ msg }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Pending Equipment Warning -->
+        {% if pending_equipment %}
+        <div class="alert alert-warning">
+            <strong>⚠️ Pending Equipment to Return:</strong>
+            <ul style="margin: 10px 0 0 20px;">
+                {% for equipment_name, pending_qty in pending_equipment %}
+                <li>{{ equipment_name }}: <strong>{{ pending_qty }}</strong> unit(s)</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <!-- Inventory Status Check -->
+        <div class="inventory-check" id="inventoryCheck" style="display: none;">
+            <strong>⚠ Inventory Status:</strong>
+            <div class="inventory-status" id="inventoryStatus"></div>
+        </div>
+
+        <!-- Borrow/Return Form for Multiple Items -->
+        <form method="POST" id="borrowForm">
+            <div class="form-section">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="student_id">Student ID <span style="color: red;">*</span></label>
+                        <input type="text" id="student_id" name="student_id" value="{{ current_student_id }}"
+                               placeholder="Enter student ID (e.g., STU001)" required>
+                        <div class="validation-error" id="studentIdError"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="action">Action <span style="color: red;">*</span></label>
+                        <select id="action" name="action" required onchange="updateActionLabel()">
+                            <option value="">-- Select Action --</option>
+                            <option value="borrow">Borrow Equipment</option>
+                            <option value="return">Return Equipment</option>
+                        </select>
+                        <div class="validation-error" id="actionError"></div>
+                    </div>
+                </div>
+
+                <!-- Detected Equipment Section -->
+                {% if detected_items %}
+                <div class="alert alert-info">
+                    <strong>🔍 Detected Equipment:</strong> {{ detected_items|join(', ') }}
+                </div>
+
+                <h3 class="equipment-list-title">Detected Equipment</h3>
+                <table class="detected-equipment-table">
+                    <thead>
+                        <tr>
+                            <th>Equipment</th>
+                            <th>Quantity</th>
+                            <th>Available</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in detected_items %}
+                        <tr>
+                            <td>{{ item }}</td>
+                            <td>
+                                <input type="hidden" name="equipment_names" value="{{ item }}">
+                                <input type="number" name="quantities" min="1" max="{{ inventory_dict.get(item, 0) }}" value="1" required class="quantity-input" style="width: 80px;">
+                            </td>
+                            <td>{{ inventory_dict.get(item, 0) }} available</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <div class="hr"></div>
+                <h3 class="equipment-list-title">Other Equipment</h3>
+                {% endif %}
+
+                <div class="equipment-list-title" id="equipmentTitle">
+                    {% if detected_items %}Select Additional Equipment{% else %}Select Equipment Items{% endif %}
+                </div>
+                <div id="equipment-list"></div>
+
+                <button type="button" class="add-equipment-btn" onclick="addEquipmentRow()">
+                    + Add Another Item
+                </button>
+
+                <div class="button-group">
+                    <button type="submit" class="btn btn-submit" id="submitBtn">Submit Transaction</button>
+                    <a href="/" class="btn btn-back">Back to Home</a>
+                </div>
+            </div>
+        </form>
+
+        <!-- Camera Capture Section -->
+        <div class="camera-section">
+            <h3>Capture Equipment from Camera</h3>
+            <p>Use your camera to automatically detect equipment items</p>
+            <button type="button" id="start-camera" class="camera-btn">📷 Start Camera</button>
+            <button type="button" id="stop-camera" class="camera-btn" style="background: #6c757d; display:none;">⏹ Stop Camera</button>
+            <br><br>
+            <video id="camera" width="320" height="240" autoplay style="display:none;"></video><br>
+            <canvas id="canvas" width="320" height="240" style="display:none;"></canvas><br>
+            <form id="image-form" method="POST" action="{{ url_for('process_capture') }}">
+                <input type="hidden" name="image_data" id="image_data">
+            </form>
+            <button type="button" id="capture" class="camera-btn" style="display:none;">📸 Capture Image</button>
+            <a href="/" class="back-button">Back</a>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div class="confirmation-modal" id="confirmationModal">
+        <div class="modal-content">
+            <div class="modal-title">Confirm Transaction</div>
+            <div class="modal-body" id="confirmationBody">
+                <!-- Will be filled by JavaScript -->
+            </div>
+            <div class="modal-buttons">
+                <button type="button" class="btn" style="background: #6c757d; color: white;" onclick="cancelConfirmation()">
+                    Cancel
+                </button>
+                <button type="button" class="btn btn-submit" onclick="confirmTransaction()">
+                    Confirm & Submit
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const video = document.getElementById('camera');
+        const canvas = document.getElementById('canvas');
+        const imageForm = document.getElementById('image-form');
+        const imageDataInput = document.getElementById('image_data');
+        const startCameraButton = document.getElementById('start-camera');
+        const stopCameraButton = document.getElementById('stop-camera');
+        const captureButton = document.getElementById('capture');
+        const borrowForm = document.getElementById('borrowForm');
+        let itemCount = 0;
+        let stream = null;
+
+        // Build inventory object from Flask template data
+        const inventoryData = `{
+            {%- for id, name, qty in inventory %}
+            "{{ name }}": {{ qty }}{{ "," if not loop.last else "" }}
+            {%- endfor %}
+        }`;
+        const inventory = JSON.parse(inventoryData);
+
+        function addEquipmentRow() {
+            itemCount++;
+            const row = document.createElement('div');
+            row.className = 'equipment-item';
+            row.id = 'item-' + itemCount;
+            row.innerHTML = `
+                <div class="item-field">
+                    <label>Equipment</label>
+                    <select name="equipment_names" class="equipment-select" onchange="updateInventoryStatus()" required>
+                        <option value="">-- Select Equipment --</option>
+                        {% for id, name, qty in inventory %}
+                            <option value="{{ name }}" data-available="{{ qty }}">{{ name }}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="available-qty" id="available-${itemCount}"></div>
+                </div>
+
+                <div class="item-field">
+                    <label>Quantity</label>
+                    <input type="number" name="quantities" min="1" value="1" 
+                           class="quantity-input" onchange="updateInventoryStatus()" oninput="updateInventoryStatus()" required>
+                    <div class="validation-error" id="qty-error-${itemCount}"></div>
+                </div>
+
+                <button type="button" class="remove-item" onclick="removeEquipmentRow('item-${itemCount}')">
+                    Remove
+                </button>
+            `;
+            document.getElementById('equipment-list').appendChild(row);
+            updateEquipmentDisplay();
+            updateInventoryStatus();
+        }
+
+        function removeEquipmentRow(itemId) {
+            document.getElementById(itemId).remove();
+            updateEquipmentDisplay();
+            updateInventoryStatus();
+        }
+
+        function updateActionLabel() {
+            const action = document.getElementById('action').value;
+            const title = document.getElementById('equipmentTitle');
+            if (action === 'borrow') {
+                title.textContent = '{% if detected_items %}Select Additional Equipment to Borrow{% else %}Select Equipment to Borrow{% endif %}';
+            } else if (action === 'return') {
+                title.textContent = '{% if detected_items %}Select Additional Equipment to Return{% else %}Select Equipment to Return{% endif %}';
+            } else {
+                title.textContent = '{% if detected_items %}Select Additional Equipment{% else %}Select Equipment Items{% endif %}';
+            }
+        }
+
+        function updateEquipmentDisplay() {
+            document.querySelectorAll('.equipment-select').forEach((select) => {
+                const itemId = select.parentElement.parentElement.id;
+                if (!itemId) return;
+                const name = select.value;
+                const availQty = select.selectedOptions[0]?.dataset?.available || 0;
+                const itemNum = itemId.split('-')[1];
+                const availDiv = document.querySelector(`#available-${itemNum}`);
+                if (availDiv) {
+                    availDiv.textContent = name ? `${availQty} available` : '';
+                }
+            });
+        }
+
+        function updateInventoryStatus() {
+            const detectedInputs = document.querySelectorAll('input[name="equipment_names"][type="hidden"]');
+            const manualSelects = document.querySelectorAll('.equipment-select');
+            let hasWarning = false;
+            let warningText = '';
+
+            // Check detected equipment
+            const detectedQuantities = document.querySelectorAll('.detected-equipment-table input[name="quantities"]');
+            detectedInputs.forEach((input, idx) => {
+                if (input.value && detectedQuantities[idx]) {
+                    const available = inventory_dict.get(input.value) || 0;
+                    const requested = parseInt(detectedQuantities[idx].value) || 0;
+                    if (requested > available) {
+                        hasWarning = true;
+                        warningText += `⚠ ${input.value}: Requesting ${requested} but only ${available} available\n`;
+                    }
+                }
+            });
+
+            // Check manually added equipment
+            manualSelects.forEach((select, idx) => {
+                if (select.value) {
+                    const available = parseInt(select.selectedOptions[0].dataset.available) || 0;
+                    const quantityInputs = document.querySelectorAll('.equipment-item .quantity-input');
+                    const requested = parseInt(quantityInputs[idx]?.value) || 0;
+                    if (requested > available) {
+                        hasWarning = true;
+                        warningText += `⚠ ${select.value}: Requesting ${requested} but only ${available} available\n`;
+                    }
+                }
+            });
+
+            const inventoryCheck = document.getElementById('inventoryCheck');
+            const inventoryStatus = document.getElementById('inventoryStatus');
+            
+            if (hasWarning) {
+                inventoryCheck.style.display = 'block';
+                inventoryStatus.textContent = warningText;
+                inventoryStatus.className = 'inventory-status warning';
+            } else {
+                inventoryCheck.style.display = 'none';
+            }
+        }
+
+        function validateForm() {
+            let isValid = true;
+            const errors = {};
+
+            document.querySelectorAll('.validation-error').forEach(el => el.classList.remove('show'));
+
+            const studentId = document.getElementById('student_id').value.trim();
+            if (!studentId) {
+                errors.studentId = 'Student ID is required';
+                isValid = false;
+            }
+
+            const action = document.getElementById('action').value;
+            if (!action) {
+                errors.action = 'Please select an action (Borrow or Return)';
+                isValid = false;
+            }
+
+            const detectedItems = document.querySelectorAll('input[name="equipment_names"][type="hidden"]');
+            const manualItems = document.querySelectorAll('.equipment-select');
+            const totalItems = detectedItems.length + manualItems.length;
+
+            if (totalItems === 0) {
+                isValid = false;
+                alert('Please add at least one equipment item');
+                return false;
+            }
+
+            if (errors.studentId) {
+                const el = document.getElementById('studentIdError');
+                el.textContent = errors.studentId;
+                el.classList.add('show');
+            }
+            if (errors.action) {
+                const el = document.getElementById('actionError');
+                el.textContent = errors.action;
+                el.classList.add('show');
+            }
+
+            return isValid;
+        }
+
+        function buildConfirmationText() {
+            const studentId = document.getElementById('student_id').value.trim();
+            const action = document.getElementById('action').value;
+            
+            let itemsList = '';
+            let total = 0;
+
+            // Add detected equipment
+            const detectedInputs = document.querySelectorAll('input[name="equipment_names"][type="hidden"]');
+            const detectedQuantities = document.querySelectorAll('.detected-equipment-table input[name="quantities"]');
+            detectedInputs.forEach((input, idx) => {
+                if (input.value && detectedQuantities[idx]) {
+                    const qty = parseInt(detectedQuantities[idx].value) || 0;
+                    itemsList += `<br>• ${qty}× ${input.value}`;
+                    total += qty;
+                }
+            });
+
+            // Add manually selected equipment
+            const manualSelects = document.querySelectorAll('.equipment-select:not([style*="display: none"])');
+            const quantityInputs = document.querySelectorAll('.equipment-item .quantity-input');
+            manualSelects.forEach((select, idx) => {
+                if (select.value && quantityInputs[idx]) {
+                    const qty = parseInt(quantityInputs[idx].value) || 0;
+                    itemsList += `<br>• ${qty}× ${select.value}`;
+                    total += qty;
+                }
+            });
+
+            const actionText = action === 'borrow' ? 'BORROW' : 'RETURN';
+            return `
+                <strong>Student ID:</strong> ${studentId}<br>
+                <strong>Action:</strong> ${actionText}<br>
+                <strong>Items:</strong> ${itemsList}<br>
+                <strong>Total Items:</strong> ${total}<br><br>
+                <p>Are you sure you want to proceed?</p>
+            `;
+        }
+
+        function showConfirmation(e) {
+            e.preventDefault();
+
+            if (!validateForm()) {
+                return false;
+            }
+
+            const confirmationBody = document.getElementById('confirmationBody');
+            confirmationBody.innerHTML = buildConfirmationText();
+            document.getElementById('confirmationModal').classList.add('show');
+        }
+
+        function cancelConfirmation() {
+            document.getElementById('confirmationModal').classList.remove('show');
+        }
+
+        function confirmTransaction() {
+            document.getElementById('confirmationModal').classList.remove('show');
+            borrowForm.submit();
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            addEquipmentRow();
+            borrowForm.onsubmit = showConfirmation;
+        });
+
+        startCameraButton.onclick = async function() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+                video.style.display = 'block';
+                startCameraButton.style.display = 'none';
+                stopCameraButton.style.display = 'inline-block';
+                captureButton.style.display = 'inline-block';
+            } catch (err) {
+                alert('Error accessing camera: ' + err.message);
+            }
+        };
+
+        stopCameraButton.onclick = function() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+            video.style.display = 'none';
+            startCameraButton.style.display = 'inline-block';
+            stopCameraButton.style.display = 'none';
+            captureButton.style.display = 'none';
+        };
+
+        captureButton.onclick = function() {
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const imageData = canvas.toDataURL('image/png');
+            imageDataInput.value = imageData;
+            imageForm.submit();
+        };
+    </script>
+</body>
+</html>

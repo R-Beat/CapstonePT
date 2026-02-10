@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+env/
+
+# Build / dist
+dist/
+build/
+*.spec
+
+# Data / large artifacts
+experiments/runs/
+dataset/
+models/*.pt
+
+# OS
+.DS_Store
+Thumbs.db

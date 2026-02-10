@@ -1,0 +1,14 @@
+dataset/
+models/
+experiments/
+data/
+*.pyc
+__pycache__/
+node_modules/
+README.dataset.txt
+README.roboflow.txt
+database.db
+*.db
+*.sqlite
+*.ipynb
+*.log

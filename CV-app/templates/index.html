@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Lab Equipment Inventory</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f7f8;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #2b6777;
+            padding: 20px;
+            color: white;
+            text-align: center;
+        }
+        .container {
+            padding: 40px;
+            max-width: 800px;
+            margin: 20px auto;
+            background: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+        h1, h2 {
+            color: #2b6777;
+        }
+        a.back-button {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 15px;
+            background-color: #52ab98;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        a.back-button:hover {
+            background-color: #468a80;
+        }
+        form {
+            margin-top: 20px;
+        }
+        input, select, button {
+            padding: 10px;
+            margin: 10px 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #2b6777;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #226065;
+        }
+        .button-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 12px 20px;
+            background-color: #52ab98;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        .button-link:hover {
+            background-color: #468a80;
+        }
+        ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        ul li {
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Lab Equipment Inventory System</h1>
+    </header>
+
+    <div class="container">
+        <h2>Welcome!</h2>
+        <p>This system allows you to register students, log equipment borrowing and returns, and track records.</p>
+
+        <ul>
+            <li><a href="/register" class="button-link">Register Student</a></li>
+            <li><a href="/borrow_return" class="button-link">Log Borrow / Return</a></li>
+            <li><a href="/records" class="button-link">Student Records</a></li>
+            <li><a href="/history" class="button-link">All History</a></li>
+            <li><a href="/inventory" class="button-link">Manage Inventory</a></li>
+            <li><a href="/admin_logs" class="button-link">Generate Report</a></li>
+            <li><a href="/pending_equipment" class="button-link">Pending Equipment</a></li>
+        </ul>
+    </div>
+
+</body>
+</html>

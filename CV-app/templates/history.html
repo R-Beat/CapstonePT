@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>All History</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f7f8;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 30px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #333;
+            margin-top: 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table th, table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        table th {
+            background-color: #007bff;
+            color: white;
+            font-weight: 600;
+        }
+        table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        table tr:hover {
+            background-color: #f0f0f0;
+        }
+        a.back-button {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 15px;
+            background-color: #52ab98;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        a.back-button:hover {
+            background-color: #468a80;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>All Equipment Logs</h2>
+        <table>
+            <tr>
+                <th>Student ID</th>
+                <th>Equipment</th>
+                <th>Action</th>
+                <th>Quantity</th>
+                <th>Timestamp</th>
+            </tr>
+            {% for row in logs %}
+                <tr>
+                    <td>{{ row[0] }}</td>
+                    <td>{{ row[1] }}</td>
+                    <td>{{ row[2] }}</td>
+                    <td>{{ row[3] }}</td>
+                    <td>{{ row[4] }}</td>
+                </tr>
+            {% endfor %}
+        </table>
+        <a href="/" class="back-button">Back</a>
+    </div>
+</body>
+</html>

@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Pending Equipment</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .pending-container {
+            max-width: 1000px;
+            margin: 30px auto;
+            padding: 20px;
+        }
+        .pending-header {
+            margin-bottom: 30px;
+        }
+        .pending-header h1 {
+            font-size: 32px;
+            color: #333;
+            margin: 0 0 10px 0;
+        }
+        .pending-header p {
+            color: #666;
+            margin: 0;
+        }
+        .search-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .search-form {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+        .search-form label {
+            font-weight: 500;
+            color: #333;
+        }
+        .search-form select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            flex: 1;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+        }
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+        .student-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .student-header {
+            background: #f5f5f5;
+            padding: 15px 20px;
+            border-bottom: 2px solid #ddd;
+        }
+        .student-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .student-details h2 {
+            margin: 0 0 5px 0;
+            color: #333;
+            font-size: 20px;
+        }
+        .student-meta {
+            font-size: 14px;
+            color: #666;
+        }
+        .total-pending {
+            font-size: 18px;
+            font-weight: bold;
+            color: #dc3545;
+        }
+        .student-body {
+            padding: 20px;
+        }
+        .pending-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .pending-table thead {
+            background: #f5f5f5;
+            border-bottom: 2px solid #ddd;
+        }
+        .pending-table th {
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+        .pending-table td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+        }
+        .pending-table tbody tr:hover {
+            background: #f9f9f9;
+        }
+        .pending-quantity {
+            font-weight: bold;
+            color: #dc3545;
+            font-size: 16px;
+        }
+        .no-pending {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            text-align: center;
+            color: #999;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .no-pending h2 {
+            color: #666;
+            margin: 0;
+        }
+        .back-link {
+            display: inline-block;
+            color: #007bff;
+            text-decoration: none;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        .back-link:hover {
+            color: #0056b3;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="pending-container">
+        <a href="{{ url_for('home') }}" class="back-link">← Back to Home</a>
+        
+        <div class="pending-header">
+            <h1>Pending Equipment</h1>
+            <p>Track equipment that students have borrowed but not yet returned</p>
+        </div>
+
+        <div class="search-section">
+            <form method="POST" action="{{ url_for('pending_equipment') }}" class="search-form">
+                <label for="student_id">Search by Student ID:</label>
+                <select name="student_id" id="student_id">
+                    <option value="">All Students</option>
+                    {% for student_id, student_name in all_students %}
+                    <option value="{{ student_id }}" {% if student_id == search_student_id %}selected{% endif %}>
+                        {{ student_id }} - {{ student_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="btn btn-primary">Search</button>
+                {% if search_student_id %}
+                <a href="{{ url_for('pending_equipment') }}" class="btn btn-secondary">Clear</a>
+                {% endif %}
+            </form>
+        </div>
+
+        {% if pending_data %}
+            {% for student in pending_data %}
+            <div class="student-card">
+                <div class="student-header">
+                    <div class="student-info">
+                        <div class="student-details">
+                            <h2>{{ student.student_id }}</h2>
+                            <div class="student-meta">
+                                <strong>{{ student.student_name }}</strong> | 
+                                {{ student.course }} - Year {{ student.year_level }}
+                            </div>
+                        </div>
+                        <div class="total-pending">
+                            ⚠️ {{ student.total_pending }} Item(s) Pending
+                        </div>
+                    </div>
+                </div>
+                <div class="student-body">
+                    <table class="pending-table">
+                        <thead>
+                            <tr>
+                                <th>Equipment Name</th>
+                                <th style="text-align: right;">Quantity Pending</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for equipment_name, qty in student.pending_items %}
+                            <tr>
+                                <td>{{ equipment_name }}</td>
+                                <td style="text-align: right;" class="pending-quantity">{{ qty }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="no-pending">
+                <h2>✓ No Pending Equipment</h2>
+                <p>All students have returned their borrowed equipment!</p>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>

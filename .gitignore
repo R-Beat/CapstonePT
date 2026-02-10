@@ -1,0 +1,7 @@
+# Virtual environments
+cv-env/
+py3.10torch/
+
+# Python cache
+__pycache__/
+*.pyc

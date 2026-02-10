@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Inventory Management</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f7f8;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #333;
+            margin-top: 0;
+        }
+        h3 {
+            color: #555;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0,123,255,0.25);
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button.delete-btn {
+            background-color: #d9534f;
+        }
+        button.delete-btn:hover {
+            background-color: #c9302c;
+        }
+        .flash {
+            padding: 15px 20px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            border-left: 4px solid;
+            background: #d4edda;
+            color: #155724;
+            border-color: #c3e6cb;
+        }
+        .inventory-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .inventory-list li {
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 12px;
+            display: grid;
+            grid-template-columns: 2fr 1fr auto auto;
+            gap: 10px;
+            align-items: center;
+        }
+        .inventory-list li:hover {
+            background: #f0f0f0;
+        }
+        .item-name {
+            font-weight: 600;
+            color: #333;
+        }
+        .item-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .item-actions input {
+            width: 80px;
+            padding: 8px;
+        }
+        a.back-button {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 15px;
+            background-color: #52ab98;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        a.back-button:hover {
+            background-color: #468a80;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h2>Inventory Management</h2>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for msg in messages %}
+                    <div class="flash">{{ msg }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <h3>Add Equipment</h3>
+        <form method="POST">
+            <input type="hidden" name="action" value="add">
+            <div class="form-group">
+                <label>Equipment Name:</label>
+                <input type="text" name="name" required>
+            </div>
+            <div class="form-group">
+                <label>Quantity:</label>
+                <input type="number" name="quantity" min="0" required>
+            </div>
+            <button type="submit">Add Equipment</button>
+        </form>
+
+        <h3>Current Inventory</h3>
+        {% if items %}
+            <ul class="inventory-list">
+                {% for id, name, qty in items %}
+                    <li>
+                        <span class="item-name">{{ name }}</span>
+                        <span>{{ qty }} pcs</span>
+                        <div class="item-actions">
+                            <form method="POST" style="display:flex; gap: 5px; align-items: center;">
+                                <input type="hidden" name="action" value="update">
+                                <input type="hidden" name="item_id" value="{{ id }}">
+                                <input type="number" name="quantity" value="{{ qty }}" min="0">
+                                <button type="submit">Update</button>
+                            </form>
+                            <form method="POST" style="display:inline;">
+                                <input type="hidden" name="action" value="delete">
+                                <input type="hidden" name="item_id" value="{{ id }}">
+                                <button type="submit" class="delete-btn">Delete</button>
+                            </form>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No equipment found in inventory.</p>
+        {% endif %}
+
+        <a href="/" class="back-button">Back</a>
+    </div>
+</body>
+</html>

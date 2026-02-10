@@ -1,0 +1,13 @@
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+
+nc: 4
+names: ['beaker', 'erlenmeyer_flask', 'funnel', 'graduated_cylinder']
+
+roboflow:
+  workspace: lab-identification
+  project: lab-identification-y2nq4
+  version: 4
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/lab-identification/lab-identification-y2nq4/dataset/4

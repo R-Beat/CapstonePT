@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Transaction Summary</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .summary-container {
+            max-width: 600px;
+            margin: 40px auto;
+            background: #f0f0f0;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .success-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .success-icon {
+            font-size: 60px;
+            color: #28a745;
+            margin-bottom: 10px;
+        }
+        .success-title {
+            font-size: 28px;
+            color: #28a745;
+            font-weight: bold;
+            margin: 0;
+        }
+        .student-info {
+            background: white;
+            padding: 20px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        .info-label {
+            font-weight: bold;
+            color: #333;
+        }
+        .info-value {
+            color: #666;
+        }
+        .items-section {
+            background: white;
+            padding: 20px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .items-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        .item-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            background: #f9f9f9;
+            margin-bottom: 8px;
+            border-radius: 4px;
+        }
+        .item-name {
+            font-weight: 500;
+        }
+        .item-quantity {
+            text-align: right;
+            color: #666;
+        }
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px;
+            background: #e8f5e9;
+            border-radius: 4px;
+            font-weight: bold;
+            color: #28a745;
+            margin-top: 10px;
+        }
+        .timestamp {
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+            margin: 15px 0;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+        .action-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-top: 8px;
+        }
+        .action-badge.borrow {
+            background: #cce5ff;
+            color: #004085;
+        }
+        .action-badge.return {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="summary-container">
+        <div class="success-header">
+            <div class="success-icon">✓</div>
+            <h1 class="success-title">Transaction Complete!</h1>
+        </div>
+
+        <div class="student-info">
+            <div class="info-row">
+                <span class="info-label">Student ID:</span>
+                <span class="info-value">{{ student_id }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Student Name:</span>
+                <span class="info-value">{{ student_name }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Course:</span>
+                <span class="info-value">{{ course if course else 'N/A' }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Year Level:</span>
+                <span class="info-value">{{ year_level if year_level else 'N/A' }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Current Equipment Count:</span>
+                <span class="info-value"><strong>{{ equipment_count }}</strong> item(s)</span>
+            </div>
+            <div style="text-align: center; margin-top: 10px;">
+                <span class="action-badge {% if action == 'borrow' %}borrow{% else %}return{% endif %}">
+                    {{ action.upper() }}
+                </span>
+            </div>
+        </div>
+
+        <div class="items-section">
+            <div class="items-title">{{ action.capitalize() }}ed Items</div>
+            {% if items %}
+                {% for item in items %}
+                    <div class="item-row">
+                        <span class="item-name">{{ item.name }}</span>
+                        <span class="item-quantity">× {{ item.quantity }}</span>
+                    </div>
+                {% endfor %}
+                <div class="total-row">
+                    <span>Total Items:</span>
+                    <span>{{ total_items }}</span>
+                </div>
+            {% else %}
+                <p style="text-align: center; color: #999;">No items recorded</p>
+            {% endif %}
+        </div>
+
+        <div class="timestamp">
+            Transaction recorded at: {{ timestamp }}
+        </div>
+
+        <div class="action-buttons">
+            <a href="{{ url_for('borrow_return') }}" class="btn btn-primary">New Transaction</a>
+            <a href="{{ url_for('records') }}" class="btn btn-secondary">View History</a>
+        </div>
+    </div>
+</body>
+</html>

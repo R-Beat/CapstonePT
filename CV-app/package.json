@@ -1,0 +1,25 @@
+{
+  "name": "labcv-electron",
+  "version": "0.1.0",
+  "description": "Electron wrapper for LabCV_sorted Flask app",
+  "main": "electron-main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win"
+  },
+  "build": {
+    "appId": "com.example.labcv",
+    "files": [
+      "**/*"
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    }
+  },
+  "devDependencies": {
+    "electron": "^39.0.0",
+    "electron-builder": "^24.13.3"
+  }
+}

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Register Student</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f7f8;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #333;
+            margin-top: 0;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0,123,255,0.25);
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .flash {
+            padding: 15px 20px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            border-left: 4px solid;
+            background: #d4edda;
+            color: #155724;
+            border-color: #c3e6cb;
+        }
+        a.back-button {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 15px;
+            background-color: #52ab98;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        a.back-button:hover {
+            background-color: #468a80;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h2>Register Student</h2>
+        
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for msg in messages %}
+                    <div class="flash">{{ msg }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST">
+            <div class="form-group">
+                <label>Student ID:</label>
+                <input type="text" name="student_id" required>
+            </div>
+            <div class="form-group">
+                <label>Full Name:</label>
+                <input type="text" name="name" required>
+            </div>
+            <div class="form-group">
+                <label>Course:</label>
+                <input type="text" name="course">
+            </div>
+            <div class="form-group">
+                <label>Year Level:</label>
+                <input type="number" name="year_level">
+            </div>
+            <button type="submit">Register</button>
+        </form>
+        <a href="/" class="back-button">Back</a>
+    </div>
+</body>
+</html>

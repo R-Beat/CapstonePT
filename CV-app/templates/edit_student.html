@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Student Information</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f7f8;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #2b6777;
+            padding: 20px;
+            color: white;
+            text-align: center;
+        }
+        .container {
+            padding: 40px;
+            max-width: 600px;
+            margin: 20px auto;
+            background: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+        h1, h2 {
+            color: #2b6777;
+        }
+        form {
+            margin-top: 20px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #2b6777;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #2b6777;
+            box-shadow: 0 0 0 2px rgba(43, 103, 119, 0.1);
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+        button, .btn-cancel {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button {
+            background-color: #2b6777;
+            color: white;
+        }
+        button:hover {
+            background-color: #226065;
+        }
+        .btn-cancel {
+            background-color: #ddd;
+            color: #333;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-cancel:hover {
+            background-color: #ccc;
+        }
+        .info-box {
+            background-color: #e7f3ff;
+            border-left: 4px solid #2b6777;
+            padding: 12px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            color: #004085;
+            font-size: 14px;
+        }
+        .back-button {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #52ab98;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        .back-button:hover {
+            background-color: #468a80;
+        }
+        .flash-message {
+            padding: 12px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        .flash-message.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .flash-message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Edit Student Information</h1>
+    </header>
+
+    <div class="container">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="flash-message error">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="info-box">
+            <strong>Note:</strong> If a course is not applicable, then just mention your department, e.g. JHS.
+        </div>
+
+        <form method="POST">
+            <div class="form-group">
+                <label for="student_id">Student ID *</label>
+                <input type="text" id="student_id" name="student_id" value="{{ student[0] }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="name">Full Name *</label>
+                <input type="text" id="name" name="name" value="{{ student[1] }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="course">Course/Program</label>
+                <input type="text" id="course" name="course" value="{{ student[2] or '' }}">
+            </div>
+
+            <div class="form-group">
+                <label for="student_type">Student Type *</label>
+                <select id="student_type" name="student_type" required>
+                    <option value="college" {% if student[4] == 'college' %}selected{% endif %}>College Student</option>
+                    <option value="ibed" {% if student[4] == 'ibed' %}selected{% endif %}>IBED Student (Grades 1-12)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="year_level">Year/Grade Level</label>
+                <input type="text" id="year_level" name="year_level" value="{{ student[3] or '' }}" placeholder="e.g., 1, 2, 3...">
+            </div>
+
+            <div class="button-group">
+                <button type="submit">Save Changes</button>
+                <a href="/registered_students" class="btn-cancel">Cancel</a>
+            </div>
+        </form>
+
+        <a href="/" class="back-button">← Back to Home</a>
+    </div>
+
+</body>
+</html>

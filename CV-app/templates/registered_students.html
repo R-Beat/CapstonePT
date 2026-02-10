@@ -124,6 +124,36 @@
             font-size: 14px;
             box-sizing: border-box;
         }
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+        }
+        .btn-edit {
+            padding: 6px 12px;
+            background-color: #52ab98;
+            color: white;
+            text-decoration: none;
+            border-radius: 3px;
+            font-size: 12px;
+            transition: background-color 0.3s;
+        }
+        .btn-edit:hover {
+            background-color: #468a80;
+        }
+        .type-badge {
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        .type-college {
+            background-color: #cfe2ff;
+            color: #084298;
+        }
+        .type-ibed {
+            background-color: #fff3cd;
+            color: #664d03;
+        }
     </style>
 </head>
 <body>
@@ -150,11 +180,13 @@
                         <th>Student ID</th>
                         <th>Name</th>
                         <th>Course</th>
-                        <th>Year Level</th>
+                        <th>Student Type</th>
+                        <th>Year/Grade Level</th>
                         <th>Total Borrows</th>
                         <th>Total Returns</th>
                         <th>Currently Holding</th>
                         <th>Status</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -164,21 +196,33 @@
                             <td>{{ student[1] }}</td>
                             <td>{{ student[2] or 'N/A' }}</td>
                             <td>
+                                {% if student[4] == 'ibed' %}
+                                    <span class="type-badge type-ibed">IBED (1-12)</span>
+                                {% else %}
+                                    <span class="type-badge type-college">College</span>
+                                {% endif %}
+                            </td>
+                            <td>
                                 {% if student[3] %}
-                                    <span class="year-badge">Year {{ student[3] }}</span>
+                                    <span class="year-badge">{{ student[3] }}</span>
                                 {% else %}
                                     <span class="year-badge">N/A</span>
                                 {% endif %}
                             </td>
-                            <td style="text-align: center;">{{ student[4] or 0 }}</td>
                             <td style="text-align: center;">{{ student[5] or 0 }}</td>
-                            <td style="text-align: center; font-weight: bold; color: #2b6777;">{{ student[6] or 0 }}</td>
+                            <td style="text-align: center;">{{ student[6] or 0 }}</td>
+                            <td style="text-align: center; font-weight: bold; color: #2b6777;">{{ student[7] or 0 }}</td>
                             <td>
-                                {% if student[6] > 0 %}
+                                {% if student[7] > 0 %}
                                     <span class="status-badge badge-active">Has Equipment</span>
                                 {% else %}
                                     <span class="status-badge badge-inactive">No Equipment</span>
                                 {% endif %}
+                            </td>
+                            <td>
+                                <div class="action-buttons">
+                                    <a href="/edit_student/{{ student[0] }}" class="btn-edit">Edit</a>
+                                </div>
                             </td>
                         </tr>
                     {% endfor %}

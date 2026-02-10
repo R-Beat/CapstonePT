@@ -38,7 +38,8 @@ def init_db():
             student_id TEXT PRIMARY KEY,
             name TEXT NOT NULL,
             course TEXT,
-            year_level INTEGER
+            year_level INTEGER,
+            student_type TEXT DEFAULT 'college'
         )
     ''')
     c.execute('''
@@ -62,6 +63,12 @@ def init_db():
     # Add quantity column if it doesn't exist
     try:
         c.execute("ALTER TABLE equipment_log ADD COLUMN quantity INTEGER DEFAULT 1")
+    except:
+        pass
+    
+    # Add student_type column if it doesn't exist
+    try:
+        c.execute("ALTER TABLE students ADD COLUMN student_type TEXT DEFAULT 'college'")
     except:
         pass
     
@@ -114,10 +121,11 @@ def register():
         name = request.form['name']
         course = request.form['course']
         year = request.form['year_level']
+        student_type = request.form.get('student_type', 'college')
 
         conn = sqlite3.connect("database.db")
         c = conn.cursor()
-        c.execute("INSERT OR IGNORE INTO students VALUES (?, ?, ?, ?)", (sid, name, course, year))
+        c.execute("INSERT OR IGNORE INTO students VALUES (?, ?, ?, ?, ?)", (sid, name, course, year, student_type))
         conn.commit()
         conn.close()
         flash("Student registered successfully!")
@@ -533,12 +541,13 @@ def registered_students():
             s.name, 
             s.course, 
             s.year_level,
+            s.student_type,
             COUNT(CASE WHEN el.action='borrow' THEN 1 END) as total_borrows,
             COUNT(CASE WHEN el.action='return' THEN 1 END) as total_returns,
             COALESCE(SUM(CASE WHEN el.action='borrow' THEN el.quantity ELSE -el.quantity END), 0) as currently_holding
         FROM students s
         LEFT JOIN equipment_log el ON s.student_id = el.student_id
-        GROUP BY s.student_id, s.name, s.course, s.year_level
+        GROUP BY s.student_id, s.name, s.course, s.year_level, s.student_type
         ORDER BY s.student_id ASC
     """)
     students = c.fetchall()
@@ -552,6 +561,88 @@ def registered_students():
     return render_template('registered_students.html', 
                          students=students,
                          total_students=total_students)
+
+@app.route('/edit_student/<student_id>', methods=['GET', 'POST'])
+def edit_student(student_id):
+    """Edit student information."""
+    conn = sqlite3.connect("database.db")
+    c = conn.cursor()
+    
+    if request.method == 'POST':
+        new_student_id = request.form['student_id'].strip()
+        name = request.form['name'].strip()
+        course = request.form['course'].strip()
+        year_level = request.form['year_level'].strip()
+        student_type = request.form.get('student_type', 'college')
+        
+        # Validate inputs
+        if not new_student_id:
+            flash("Student ID cannot be empty.")
+            return redirect(url_for('edit_student', student_id=student_id))
+        
+        if not name:
+            flash("Student name cannot be empty.")
+            return redirect(url_for('edit_student', student_id=student_id))
+        
+        try:
+            if year_level:
+                year_level = int(year_level)
+                
+                # Validate year level based on student type
+                if student_type == 'ibed':
+                    if year_level < 1 or year_level > 12:
+                        flash("IBED student grade level must be between 1 and 12.")
+                        return redirect(url_for('edit_student', student_id=student_id))
+                elif student_type == 'college':
+                    if year_level < 1:
+                        flash("College student year level must be at least 1.")
+                        return redirect(url_for('edit_student', student_id=student_id))
+            else:
+                year_level = None
+        except ValueError:
+            flash("Year level must be a valid number.")
+            return redirect(url_for('edit_student', student_id=student_id))
+        
+        # Check if new student_id already exists (and is different from old one)
+        if new_student_id != student_id:
+            c.execute("SELECT student_id FROM students WHERE student_id=?", (new_student_id,))
+            if c.fetchone():
+                flash("This Student ID already exists. Please use a unique ID.")
+                conn.close()
+                return redirect(url_for('edit_student', student_id=student_id))
+        
+        try:
+            # If student_id changed, update references in equipment_log
+            if new_student_id != student_id:
+                c.execute("UPDATE equipment_log SET student_id=? WHERE student_id=?", (new_student_id, student_id))
+            
+            # Update student information
+            c.execute("""
+                UPDATE students 
+                SET student_id=?, name=?, course=?, year_level=?, student_type=? 
+                WHERE student_id=?
+            """, (new_student_id, name, course if course else None, year_level, student_type, student_id))
+            conn.commit()
+            conn.close()
+            
+            flash("Student information updated successfully!")
+            return redirect(url_for('registered_students'))
+        except Exception as e:
+            conn.rollback()
+            conn.close()
+            flash(f"Error updating student: {str(e)}")
+            return redirect(url_for('edit_student', student_id=student_id))
+    
+    # GET request - retrieve student info
+    c.execute("SELECT student_id, name, course, year_level, student_type FROM students WHERE student_id=?", (student_id,))
+    student = c.fetchone()
+    conn.close()
+    
+    if not student:
+        flash("Student not found.")
+        return redirect(url_for('registered_students'))
+    
+    return render_template('edit_student.html', student=student)
 
 # ---------- Run Server ----------
 if __name__ == '__main__':

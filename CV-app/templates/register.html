@@ -110,7 +110,14 @@
                 <input type="text" name="course">
             </div>
             <div class="form-group">
-                <label>Year Level:</label>
+                <label>Student Type:</label>
+                <select name="student_type" required>
+                    <option value="college">College Student</option>
+                    <option value="ibed">IBED Student (Grades 1-12)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Year/Grade Level:</label>
                 <input type="number" name="year_level">
             </div>
             <button type="submit">Register</button>

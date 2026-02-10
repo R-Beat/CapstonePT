@@ -520,6 +520,39 @@ def history():
     conn.close()
     return render_template('history.html', logs=logs)
 
+@app.route('/registered_students')
+def registered_students():
+    """Display all registered students."""
+    conn = sqlite3.connect("database.db")
+    c = conn.cursor()
+    
+    # Get all students with their borrowing statistics
+    c.execute("""
+        SELECT 
+            s.student_id, 
+            s.name, 
+            s.course, 
+            s.year_level,
+            COUNT(CASE WHEN el.action='borrow' THEN 1 END) as total_borrows,
+            COUNT(CASE WHEN el.action='return' THEN 1 END) as total_returns,
+            COALESCE(SUM(CASE WHEN el.action='borrow' THEN el.quantity ELSE -el.quantity END), 0) as currently_holding
+        FROM students s
+        LEFT JOIN equipment_log el ON s.student_id = el.student_id
+        GROUP BY s.student_id, s.name, s.course, s.year_level
+        ORDER BY s.student_id ASC
+    """)
+    students = c.fetchall()
+    
+    # Get total stats
+    c.execute("SELECT COUNT(*) FROM students")
+    total_students = c.fetchone()[0]
+    
+    conn.close()
+    
+    return render_template('registered_students.html', 
+                         students=students,
+                         total_students=total_students)
+
 # ---------- Run Server ----------
 if __name__ == '__main__':
     init_db()

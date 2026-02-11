@@ -131,6 +131,25 @@ def register():
         course = request.form['course']
         year = request.form['year_level']
         student_type = request.form.get('student_type', 'college')
+        try:
+            if year:
+                year = int(year)
+                
+                # Validate year level based on student type
+                if student_type == 'ibed':
+                    if year < 1 or year > 12:
+                        flash("IBED student grade level must be between 1 and 12.")
+                        return redirect(url_for('register'))
+                elif student_type == 'college':
+                    if year < 1:
+                        flash("College student year level must be at least 1.")
+                        return redirect(url_for('register'))
+            else:
+                year = None
+        except ValueError:
+            flash("Year level must be a valid number.")
+            return redirect(url_for('register'))
+        
 
         conn = sqlite3.connect("database.db")
         c = conn.cursor()

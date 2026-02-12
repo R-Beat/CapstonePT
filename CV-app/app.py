@@ -239,9 +239,18 @@ def borrow_return():
         equipment_names = request.form.getlist('equipment_names')
         quantities = request.form.getlist('quantities')
         
-        # Filter out empty values
-        equipment_names = [e for e in equipment_names if e.strip()]
-        quantities = [q for q in quantities if q.strip()]
+        # Filter out empty pairs - keep only where equipment_name is not empty
+        filtered_equipment = []
+        filtered_quantities = []
+        for name, qty in zip(equipment_names, quantities):
+            name = name.strip() if name else ''
+            qty = qty.strip() if qty else ''
+            if name and qty:  # Both must be non-empty
+                filtered_equipment.append(name)
+                filtered_quantities.append(qty)
+        
+        equipment_names = filtered_equipment
+        quantities = filtered_quantities
         
         # Validate inputs
         if not student_id:
@@ -254,10 +263,6 @@ def borrow_return():
         
         if not equipment_names or len(equipment_names) == 0:
             flash("Please select at least one equipment item.")
-            return redirect(url_for('borrow_return'))
-        
-        if len(equipment_names) != len(quantities):
-            flash("Equipment and quantity mismatch.")
             return redirect(url_for('borrow_return'))
         
         # Validate quantities

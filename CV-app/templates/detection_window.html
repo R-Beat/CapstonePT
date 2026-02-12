@@ -97,6 +97,35 @@
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .fps-control {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-left: auto;
+        }
+
+        .fps-control label {
+            color: #fff;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .fps-control select {
+            padding: 6px 10px;
+            border: 1px solid #555;
+            border-radius: 3px;
+            background: #3d3d3d;
+            color: #fff;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .fps-control select:focus {
+            outline: none;
+            border-color: #667eea;
         }
 
         .btn {
@@ -377,6 +406,17 @@
                 <button type="button" class="btn btn-capture" id="captureBtn">📸 Capture & Register</button>
                 <button type="button" class="btn btn-clear" id="clearBtn">🔄 Clear All</button>
                 <button type="button" class="btn btn-close" id="closeBtn">❌ Close Detection</button>
+                <div class="fps-control">
+                    <label for="fpsSelect">Processing Speed:</label>
+                    <select id="fpsSelect">
+                        <option value="1">1 FPS</option>
+                        <option value="2">2 FPS</option>
+                        <option value="5">5 FPS</option>
+                        <option value="10">10 FPS</option>
+                        <option value="15">15 FPS</option>
+                        <option value="30" selected>30 FPS</option>
+                    </select>
+                </div>
             </div>
         </div>
 
@@ -421,10 +461,12 @@
         let stream = null;
         let detectedEquipment = {};
         let lastFrameTime = Date.now();
+        let lastProcessedFrame = Date.now();
         let frameCount = 0;
         let totalFrames = 0;
         let totalDetections = 0;
         let detectionRunning = false;
+        let targetFPS = 30;
 
         // CLASS_TO_EQUIPMENT mapping from Python backend
         const CLASS_TO_EQUIPMENT = {
@@ -489,35 +531,47 @@
             frameCount++;
             totalFrames++;
 
-            const canvas_temp = document.createElement('canvas');
-            canvas_temp.width = video.videoWidth;
-            canvas_temp.height = video.videoHeight;
-            const ctx_temp = canvas_temp.getContext('2d');
-            ctx_temp.drawImage(video, 0, 0);
+            const now = Date.now();
+            const timeSinceLastFrame = now - lastProcessedFrame;
+            const frameInterval = 1000 / targetFPS;
 
-            const imageData = canvas_temp.toDataURL('image/jpeg', 0.7);
+            // Only process frame if enough time has passed for the target FPS
+            if (timeSinceLastFrame >= frameInterval) {
+                lastProcessedFrame = now;
 
-            // Send frame to backend for detection
-            fetch('/process_frame', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: 'image_data=' + encodeURIComponent(imageData)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.detected_classes) {
-                    updateDetections(data.detected_classes, data.boxes || []);
-                    drawDetections(data.boxes || []);
-                    totalDetections += Object.keys(data.detected_classes).length;
-                    document.getElementById('detectionsFound').textContent = totalDetections;
-                }
-                updateDetectionStatus();
+                const canvas_temp = document.createElement('canvas');
+                canvas_temp.width = video.videoWidth;
+                canvas_temp.height = video.videoHeight;
+                const ctx_temp = canvas_temp.getContext('2d');
+                ctx_temp.drawImage(video, 0, 0);
+
+                const imageData = canvas_temp.toDataURL('image/jpeg', 0.7);
+
+                // Send frame to backend for detection
+                fetch('/process_frame', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: 'image_data=' + encodeURIComponent(imageData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.detected_classes) {
+                        updateDetections(data.detected_classes, data.boxes || []);
+                        drawDetections(data.boxes || []);
+                        totalDetections += Object.keys(data.detected_classes).length;
+                        document.getElementById('detectionsFound').textContent = totalDetections;
+                    }
+                    updateDetectionStatus();
+                    requestAnimationFrame(detectFrame);
+                })
+                .catch(err => {
+                    console.error('Detection error:', err);
+                    requestAnimationFrame(detectFrame);
+                });
+            } else {
+                // Skip this frame and check again next animation frame
                 requestAnimationFrame(detectFrame);
-            })
-            .catch(err => {
-                console.error('Detection error:', err);
-                requestAnimationFrame(detectFrame);
-            });
+            }
         }
 
         function drawDetections(boxes) {
@@ -554,9 +608,9 @@
         }
 
         function updateDetections(detectedClasses, boxes) {
-            detectedClasses.forEach(cls => {
-                const equipmentName = CLASS_TO_EQUIPMENT[cls];
-                if (equipmentName) {
+            detectedClasses.forEach(equipmentName => {
+                // Backend returns already-mapped equipment names (e.g., "Graduated Cylinder")
+                if (equipmentName && equipmentName.trim()) {
                     if (!detectedEquipment[equipmentName]) {
                         detectedEquipment[equipmentName] = {
                             count: 1,
@@ -678,6 +732,12 @@
                 stream.getTracks().forEach(track => track.stop());
             }
             window.close();
+        });
+
+        // FPS control listener
+        document.getElementById('fpsSelect').addEventListener('change', (e) => {
+            targetFPS = parseInt(e.target.value);
+            lastProcessedFrame = Date.now();
         });
 
         // Message listener for cross-window communication

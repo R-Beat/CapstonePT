@@ -595,9 +595,19 @@
                 isValid = false;
             }
 
+            // Count detected items
             const detectedItems = document.querySelectorAll('input[name="equipment_names"][type="hidden"]');
-            const manualItems = document.querySelectorAll('.equipment-select');
-            const totalItems = detectedItems.length + manualItems.length;
+            
+            // Count manually selected items (non-empty)
+            const manualSelects = document.querySelectorAll('.equipment-select');
+            let manualCount = 0;
+            manualSelects.forEach(select => {
+                if (select.value && select.value.trim()) {
+                    manualCount++;
+                }
+            });
+            
+            const totalItems = detectedItems.length + manualCount;
 
             if (totalItems === 0) {
                 isValid = false;
@@ -676,6 +686,17 @@
 
         function confirmTransaction() {
             document.getElementById('confirmationModal').classList.remove('show');
+            
+            // Clean up empty manual equipment rows before submission
+            const equipmentItems = document.querySelectorAll('.equipment-item');
+            equipmentItems.forEach(item => {
+                const select = item.querySelector('.equipment-select');
+                if (select && !select.value) {
+                    // Remove empty row
+                    item.remove();
+                }
+            });
+            
             borrowForm.submit();
         }
 
@@ -764,7 +785,11 @@
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-            addEquipmentRow();
+            // Only add an initial empty row if there are no detected items
+            const detectedTable = document.querySelector('.detected-equipment-table');
+            if (!detectedTable) {
+                addEquipmentRow();
+            }
             borrowForm.onsubmit = showConfirmation;
         });
     </script>

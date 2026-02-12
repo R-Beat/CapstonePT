@@ -22,10 +22,23 @@
             color: #333;
             margin-top: 0;
         }
+        .date-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 15px;
+            margin-top: 20px;
+            margin-bottom: 0;
+            border-radius: 4px 4px 0 0;
+            font-weight: 600;
+            font-size: 15px;
+        }
+        .date-header:first-child {
+            margin-top: 0;
+        }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
+            margin-bottom: 20px;
         }
         table th, table td {
             padding: 12px;
@@ -59,17 +72,22 @@
 </head>
 <body>
     <div class="container">
+        <a href="/" class="back-button" style="display: inline-block; margin-bottom: 20px;">← Back to Home</a>
         <h2>All Equipment Logs</h2>
-        <table>
-            <tr>
-                <th>Student ID</th>
-                <th>Student Name</th>
-                <th>Equipment</th>
-                <th>Action</th>
-                <th>Quantity</th>
-                <th>Timestamp</th>
-            </tr>
-            {% for row in logs %}
+        
+        {% if grouped_logs %}
+            {% for date, logs in grouped_logs.items() %}
+            <div class="date-header">📅 {{ date }}</div>
+            <table>
+                <tr>
+                    <th>Student ID</th>
+                    <th>Student Name</th>
+                    <th>Equipment</th>
+                    <th>Action</th>
+                    <th>Quantity</th>
+                    <th>Timestamp</th>
+                </tr>
+                {% for row in logs %}
                 <tr>
                     <td>{{ row[0] }}</td>
                     <td>{{ row[1] if row[1] else 'Unknown' }}</td>
@@ -78,9 +96,12 @@
                     <td>{{ row[4] }}</td>
                     <td>{{ row[5] }}</td>
                 </tr>
+                {% endfor %}
+            </table>
             {% endfor %}
-        </table>
-        <a href="/" class="back-button">Back</a>
+        {% else %}
+        <p style="text-align: center; color: #666; padding: 20px;">No records found.</p>
+        {% endif %}
     </div>
 </body>
 </html>

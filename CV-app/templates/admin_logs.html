@@ -191,13 +191,25 @@
         .back-link:hover {
             text-decoration: underline;
         }
+        .date-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 15px;
+            margin-top: 20px;
+            margin-bottom: 0;
+            border-radius: 4px 4px 0 0;
+            font-weight: 600;
+            font-size: 15px;
+        }
+        .date-header:first-child {
+            margin-top: 0;
+        }
     </style>
 </head>
 <body>
         <div class="admin-container">
-        <a href="{{ url_for('home') }}" class="back-link">← Back to Home</a>
-        
         <div class="admin-header">
+            <a href="{{ url_for('home') }}" class="back-link" style="display: block; margin-bottom: 20px;">← Back to Home</a>
             <h1>Transaction Logs</h1>
             <p>View all equipment borrow and return transactions</p>
         </div>
@@ -242,33 +254,42 @@
         <div class="logs-section">
             <div class="logs-header">
                 <div class="logs-title">Transaction Records</div>
-                <div class="logs-count">{{ logs|length }} Records</div>
-            </div>
-            {% if logs %}
-            <table>
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Student ID</th>
-                        <th>Student Name</th>
-                        <th>Equipment</th>
-                        <th>Action</th>
-                        <th>Timestamp</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for log in logs %}
-                    <tr>
-                        <td>{{ log[0] }}</td>
-                        <td>{{ log[1] }}</td>
-                        <td>{{ log[2] or 'N/A' }}</td>
-                        <td>{{ log[3] }}</td>
-                        <td><span class="badge badge-{{ log[4].lower() }}">{{ log[4].upper() }}</span></td>
-                        <td>{{ log[5] }}</td>
-                    </tr>
+                <div class="logs-count">
+                    {% set total_count = 0 %}
+                    {% for date, logs in grouped_logs.items() %}
+                        {% set total_count = total_count + logs|length %}
                     {% endfor %}
-                </tbody>
-            </table>
+                    {{ total_count }} Records
+                </div>
+            </div>
+            {% if grouped_logs %}
+                {% for date, logs in grouped_logs.items() %}
+                <div class="date-header">📅 {{ date }}</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Student ID</th>
+                            <th>Student Name</th>
+                            <th>Equipment</th>
+                            <th>Action</th>
+                            <th>Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in logs %}
+                        <tr>
+                            <td>{{ log[0] }}</td>
+                            <td>{{ log[1] }}</td>
+                            <td>{{ log[2] or 'N/A' }}</td>
+                            <td>{{ log[3] }}</td>
+                            <td><span class="badge badge-{{ log[4].lower() }}">{{ log[4].upper() }}</span></td>
+                            <td>{{ log[5] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% endfor %}
             {% else %}
             <div class="no-data">No transaction records found.</div>
             {% endif %}

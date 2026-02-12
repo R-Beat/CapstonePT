@@ -500,7 +500,11 @@ def inventory():
 
 @app.route('/records', methods=['GET', 'POST'])
 def records():
+    from datetime import datetime
+    from collections import OrderedDict
+    
     logs = []
+    grouped_logs = OrderedDict()
     search_query = ''
     search_type = ''
     
@@ -533,8 +537,25 @@ def records():
             
             logs = c.fetchall()
             conn.close()
+            
+            # Group logs by date
+            for log in logs:
+                # Extract date from timestamp (format: YYYY-MM-DD HH:MM:SS)
+                timestamp = log[5]
+                date_str = timestamp.split(' ')[0] if timestamp else 'Unknown'
+                
+                # Parse date for display
+                try:
+                    date_obj = datetime.strptime(date_str, '%Y-%m-%d')
+                    date_display = date_obj.strftime('%A, %B %d, %Y')  # e.g., "Monday, January 15, 2024"
+                except:
+                    date_display = date_str
+                
+                if date_display not in grouped_logs:
+                    grouped_logs[date_display] = []
+                grouped_logs[date_display].append(log)
     
-    return render_template('records.html', logs=logs, search_query=search_query, search_type=search_type)
+    return render_template('records.html', grouped_logs=grouped_logs, search_query=search_query, search_type=search_type)
 
 
 @app.route('/transaction_summary')
@@ -586,6 +607,9 @@ def transaction_summary():
 @app.route('/admin_logs', methods=['GET', 'POST'])
 def admin_logs():
     """Display transaction logs with filtering and sorting options."""
+    from datetime import datetime
+    from collections import OrderedDict
+    
     try:
         conn = sqlite3.connect("database.db")
         c = conn.cursor()
@@ -631,6 +655,24 @@ def admin_logs():
         c.execute(query, params)
         logs = c.fetchall()
         
+        # Group logs by date
+        grouped_logs = OrderedDict()
+        for log in logs:
+            # Extract date from timestamp (format: YYYY-MM-DD HH:MM:SS)
+            timestamp = log[5]
+            date_str = timestamp.split(' ')[0] if timestamp else 'Unknown'
+            
+            # Parse date for display
+            try:
+                date_obj = datetime.strptime(date_str, '%Y-%m-%d')
+                date_display = date_obj.strftime('%A, %B %d, %Y')  # e.g., "Monday, January 15, 2024"
+            except:
+                date_display = date_str
+            
+            if date_display not in grouped_logs:
+                grouped_logs[date_display] = []
+            grouped_logs[date_display].append(log)
+        
         # Get unique values for filter dropdowns
         c.execute("SELECT DISTINCT student_id FROM students ORDER BY student_id")
         all_students = [s[0] for s in c.fetchall()]
@@ -641,7 +683,7 @@ def admin_logs():
         conn.close()
         
         return render_template('admin_logs.html', 
-                             logs=logs,
+                             grouped_logs=grouped_logs,
                              filters=filters,
                              students=all_students,
                              equipment=all_equipment)
@@ -663,7 +705,29 @@ def history():
     """)
     logs = c.fetchall()
     conn.close()
-    return render_template('history.html', logs=logs)
+    
+    # Group logs by date
+    from datetime import datetime
+    from collections import OrderedDict
+    grouped_logs = OrderedDict()
+    
+    for log in logs:
+        # Extract date from timestamp (format: YYYY-MM-DD HH:MM:SS)
+        timestamp = log[5]
+        date_str = timestamp.split(' ')[0] if timestamp else 'Unknown'
+        
+        # Parse date for display
+        try:
+            date_obj = datetime.strptime(date_str, '%Y-%m-%d')
+            date_display = date_obj.strftime('%A, %B %d, %Y')  # e.g., "Monday, January 15, 2024"
+        except:
+            date_display = date_str
+        
+        if date_display not in grouped_logs:
+            grouped_logs[date_display] = []
+        grouped_logs[date_display].append(log)
+    
+    return render_template('history.html', grouped_logs=grouped_logs)
 
 @app.route('/registered_students')
 def registered_students():

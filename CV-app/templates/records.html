@@ -42,6 +42,11 @@
             font-size: 14px;
             box-sizing: border-box;
         }
+        .form-group input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0,123,255,0.25);
+        }
         .form-group select {
             padding: 10px 12px;
             border: 1px solid #ddd;
@@ -67,6 +72,7 @@
             gap: 10px;
             align-items: flex-end;
         }
+        button {
             background-color: #007bff;
             color: white;
             padding: 10px 20px;
@@ -112,10 +118,24 @@
         a.back-button:hover {
             background-color: #468a80;
         }
+        .date-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 15px;
+            margin-top: 20px;
+            margin-bottom: 0;
+            border-radius: 4px 4px 0 0;
+            font-weight: 600;
+            font-size: 15px;
+        }
+        .date-header:first-child {
+            margin-top: 0;
+        }
     </style>
 </head>
 <body>
     <div class="container">
+        <a href="/" class="back-button" style="display: inline-block; margin-bottom: 20px;">← Back to Home</a>
         <h2>Search Student Records</h2>
         <form method="POST">
             <div class="form-group">
@@ -136,7 +156,9 @@
             </div>
         </form>
         
-        {% if logs %}
+        {% if grouped_logs %}
+        {% for date, logs in grouped_logs.items() %}
+        <div class="date-header">📅 {{ date }}</div>
         <table>
             <tr>
                 <th>Student ID</th>
@@ -147,22 +169,22 @@
                 <th>Timestamp</th>
             </tr>
             {% for row in logs %}
-                <tr>
-                    <td>{{ row[0] }}</td>
-                    <td>{{ row[1] if row[1] else 'Unknown' }}</td>
-                    <td>{{ row[2] }}</td>
-                    <td>{{ row[3] }}</td>
-                    <td>{{ row[4] }}</td>
-                    <td>{{ row[5] }}</td>
-                </tr>
+            <tr>
+                <td>{{ row[0] }}</td>
+                <td>{{ row[1] if row[1] else 'Unknown' }}</td>
+                <td>{{ row[2] }}</td>
+                <td>{{ row[3] }}</td>
+                <td>{{ row[4] }}</td>
+                <td>{{ row[5] }}</td>
+            </tr>
             {% endfor %}
         </table>
+        {% endfor %}
         {% elif search_query %}
         <div style="padding: 20px; text-align: center; color: #666;">
             <p>No records found for the given search criteria.</p>
         </div>
         {% endif %}
-        <a href="/" class="back-button">Back</a>
     </div>
 </body>
 </html>

@@ -30,7 +30,7 @@ CLASS_TO_EQUIPMENT = {
 
 # ---------- DB Setup ----------
 def init_db():
-    conn = sqlite3.connect("database.db")
+    conn = sqlite3.connect("C:\\Users\\Asus\\Desktop\\Official Code for the CVALEU\\CV-app\\database.db")
     c = conn.cursor()
 
     c.execute('''
@@ -86,7 +86,7 @@ def init_db():
 
 # ---------- Helper Functions ----------
 def get_inventory():
-    conn = sqlite3.connect("database.db")
+    conn = sqlite3.connect("C:\\Users\\Asus\\Desktop\\Official Code for the CVALEU\\CV-app\\database.db")
     c = conn.cursor()
     c.execute("SELECT id, name, total_quantity, quantity FROM inventory ORDER BY name ASC")
     items = c.fetchall()
@@ -95,7 +95,7 @@ def get_inventory():
 
 def get_inventory_dict():
     """Return dict: equipment_name -> available quantity"""
-    conn = sqlite3.connect("database.db")
+    conn = sqlite3.connect("C:\\Users\\Asus\\Desktop\\Official Code for the CVALEU\\CV-app\\database.db")
     c = conn.cursor()
     c.execute("SELECT name, quantity FROM inventory")
     items = c.fetchall()
@@ -104,7 +104,7 @@ def get_inventory_dict():
 
 def get_pending_equipment(student_id):
     """Return list of equipment student borrowed but hasn't fully returned."""
-    conn = sqlite3.connect("database.db")
+    conn = sqlite3.connect("C:\\Users\\Asus\\Desktop\\Official Code for the CVALEU\\CV-app\\database.db")
     c = conn.cursor()
     c.execute("""
         SELECT equipment_name, SUM(CASE WHEN action='borrow' THEN quantity ELSE -quantity END) as pending
@@ -167,7 +167,7 @@ def pending_equipment():
     pending_data = []
     search_student_id = request.form.get('student_id', '').strip() if request.method == 'POST' else ''
     
-    conn = sqlite3.connect("database.db")
+    conn = sqlite3.connect("C:\\Users\\Asus\\Desktop\\Official Code for the CVALEU\\CV-app\\database.db")
     c = conn.cursor()
     
     if search_student_id:
@@ -462,7 +462,7 @@ def process_capture():
 
 @app.route('/inventory', methods=['GET', 'POST'])
 def inventory():
-    conn = sqlite3.connect("database.db")
+    conn = sqlite3.connect("C:\\Users\\Asus\\Desktop\\Official Code for the CVALEU\\CV-app\\database.db")
     c = conn.cursor()
     if request.method == 'POST':
         action = request.form.get('action')
@@ -518,7 +518,7 @@ def records():
         search_type = request.form.get('search_type', 'id')
         
         if search_query:
-            conn = sqlite3.connect("database.db")
+            conn = sqlite3.connect("C:\\Users\\Asus\\Desktop\\Official Code for the CVALEU\\CV-app\\database.db")
             c = conn.cursor()
             
             if search_type == 'name':
@@ -573,7 +573,7 @@ def transaction_summary():
     total = int(request.args.get('total', 0))
     
     # Get student details
-    conn = sqlite3.connect("database.db")
+    conn = sqlite3.connect("C:\\Users\\Asus\\Desktop\\Official Code for the CVALEU\\CV-app\\database.db")
     c = conn.cursor()
     c.execute("SELECT name, course, year_level FROM students WHERE student_id=?", (student_id,))
     student_data = c.fetchone()
@@ -616,7 +616,7 @@ def admin_logs():
     from collections import OrderedDict
     
     try:
-        conn = sqlite3.connect("database.db")
+        conn = sqlite3.connect("C:\\Users\\Asus\\Desktop\\Official Code for the CVALEU\\CV-app\\database.db")
         c = conn.cursor()
         
         filters = {
@@ -700,7 +700,7 @@ def admin_logs():
 
 @app.route('/history')
 def history():
-    conn = sqlite3.connect("database.db")
+    conn = sqlite3.connect("C:\\Users\\Asus\\Desktop\\Official Code for the CVALEU\\CV-app\\database.db")
     c = conn.cursor()
     c.execute("""
         SELECT el.student_id, s.name, el.equipment_name, el.action, el.quantity, el.timestamp 
@@ -737,7 +737,7 @@ def history():
 @app.route('/registered_students')
 def registered_students():
     """Display all registered students."""
-    conn = sqlite3.connect("database.db")
+    conn = sqlite3.connect("C:\\Users\\Asus\\Desktop\\Official Code for the CVALEU\\CV-app\\database.db")
     c = conn.cursor()
     
     # Get all students with their borrowing statistics
@@ -771,7 +771,7 @@ def registered_students():
 @app.route('/edit_student/<student_id>', methods=['GET', 'POST'])
 def edit_student(student_id):
     """Edit student information."""
-    conn = sqlite3.connect("database.db")
+    conn = sqlite3.connect("C:\\Users\\Asus\\Desktop\\Official Code for the CVALEU\\CV-app\\database.db")
     c = conn.cursor()
     
     if request.method == 'POST':

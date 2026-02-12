@@ -98,7 +98,14 @@ function createWindow() {
 }
 
 function createTray() {
-  tray = new Tray(path.join(__dirname, 'icon.png')); // We'll need to add an icon file
+  // Check if icon file exists, otherwise skip tray (optional feature)
+  const iconPath = path.join(__dirname, 'icon.png');
+  if (!fs.existsSync(iconPath)) {
+    console.warn('icon.png not found, skipping system tray');
+    return;
+  }
+
+  tray = new Tray(iconPath);
   const contextMenu = Menu.buildFromTemplate([
     { 
       label: 'Show Window', 

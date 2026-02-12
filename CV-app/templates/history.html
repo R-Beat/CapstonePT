@@ -63,6 +63,7 @@
         <table>
             <tr>
                 <th>Student ID</th>
+                <th>Student Name</th>
                 <th>Equipment</th>
                 <th>Action</th>
                 <th>Quantity</th>
@@ -71,10 +72,11 @@
             {% for row in logs %}
                 <tr>
                     <td>{{ row[0] }}</td>
-                    <td>{{ row[1] }}</td>
+                    <td>{{ row[1] if row[1] else 'Unknown' }}</td>
                     <td>{{ row[2] }}</td>
                     <td>{{ row[3] }}</td>
                     <td>{{ row[4] }}</td>
+                    <td>{{ row[5] }}</td>
                 </tr>
             {% endfor %}
         </table>

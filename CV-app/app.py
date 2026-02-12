@@ -359,6 +359,75 @@ def borrow_return():
                            pending_equipment=pending_equipment,
                            current_student_id=student_id)
 
+@app.route('/detect_equipment')
+def detect_equipment():
+    """Serve the detection window for real-time equipment detection."""
+    return render_template('detection_window.html')
+
+@app.route('/process_frame', methods=['POST'])
+def process_frame():
+    """Process a video frame and detect equipment in real-time."""
+    try:
+        image_data = request.form.get('image_data', '')
+        if not image_data:
+            return {'error': 'No image data'}, 400
+        
+        # Decode image data
+        if ',' in image_data:
+            image_data = image_data.split(",")[1]
+        
+        nparr = np.frombuffer(base64.b64decode(image_data), np.uint8)
+        frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        
+        if frame is None:
+            return {'error': 'Failed to decode image'}, 400
+        
+        # Run YOLO detection
+        results = model(frame, verbose=False)
+        
+        detected_classes = set()
+        boxes = []
+        inventory_dict = get_inventory_dict()
+        
+        for r in results:
+            for box in r.boxes:
+                cls_id = int(box.cls[0])
+                class_name = model.names[cls_id]
+                detected_classes.add(class_name)
+                
+                # Get equipment name
+                equipment_name = CLASS_TO_EQUIPMENT.get(class_name)
+                if equipment_name and equipment_name in inventory_dict:
+                    # Extract box coordinates
+                    x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
+                    confidence = float(box.conf[0])
+                    
+                    boxes.append({
+                        'x1': float(x1),
+                        'y1': float(y1),
+                        'x2': float(x2),
+                        'y2': float(y2),
+                        'label': equipment_name,
+                        'confidence': confidence
+                    })
+        
+        # Map detected classes to equipment names
+        detected_equipment = []
+        for cls in detected_classes:
+            if cls in CLASS_TO_EQUIPMENT:
+                equipment_name = CLASS_TO_EQUIPMENT[cls]
+                if equipment_name in inventory_dict:
+                    detected_equipment.append(equipment_name)
+        
+        return {
+            'detected_classes': detected_equipment,
+            'boxes': boxes,
+            'count': len(detected_equipment)
+        }
+    except Exception as e:
+        print(f"Frame processing error: {str(e)}")
+        return {'error': str(e), 'detected_classes': [], 'boxes': []}, 500
+
 @app.route('/process_capture', methods=['POST'])
 def process_capture():
     image_data = request.form['image_data'].split(",")[1]
@@ -432,14 +501,40 @@ def inventory():
 @app.route('/records', methods=['GET', 'POST'])
 def records():
     logs = []
+    search_query = ''
+    search_type = ''
+    
     if request.method == 'POST':
-        student_id = request.form['student_id']
-        conn = sqlite3.connect("database.db")
-        c = conn.cursor()
-        c.execute("SELECT equipment_name, action, quantity, timestamp FROM equipment_log WHERE student_id=? ORDER BY timestamp DESC", (student_id,))
-        logs = c.fetchall()
-        conn.close()
-    return render_template('records.html', logs=logs)
+        search_query = request.form.get('search_query', '').strip()
+        search_type = request.form.get('search_type', 'id')
+        
+        if search_query:
+            conn = sqlite3.connect("database.db")
+            c = conn.cursor()
+            
+            if search_type == 'name':
+                # Search by student name
+                c.execute("""
+                    SELECT s.student_id, s.name, el.equipment_name, el.action, el.quantity, el.timestamp 
+                    FROM equipment_log el
+                    LEFT JOIN students s ON el.student_id = s.student_id
+                    WHERE s.name LIKE ? 
+                    ORDER BY el.timestamp DESC
+                """, (f'%{search_query}%',))
+            else:
+                # Search by student ID (default)
+                c.execute("""
+                    SELECT s.student_id, s.name, el.equipment_name, el.action, el.quantity, el.timestamp 
+                    FROM equipment_log el
+                    LEFT JOIN students s ON el.student_id = s.student_id
+                    WHERE el.student_id = ? 
+                    ORDER BY el.timestamp DESC
+                """, (search_query,))
+            
+            logs = c.fetchall()
+            conn.close()
+    
+    return render_template('records.html', logs=logs, search_query=search_query, search_type=search_type)
 
 
 @app.route('/transaction_summary')
@@ -560,7 +655,12 @@ def admin_logs():
 def history():
     conn = sqlite3.connect("database.db")
     c = conn.cursor()
-    c.execute("SELECT student_id, equipment_name, action, quantity, timestamp FROM equipment_log ORDER BY timestamp DESC")
+    c.execute("""
+        SELECT el.student_id, s.name, el.equipment_name, el.action, el.quantity, el.timestamp 
+        FROM equipment_log el
+        LEFT JOIN students s ON el.student_id = s.student_id
+        ORDER BY el.timestamp DESC
+    """)
     logs = c.fetchall()
     conn.close()
     return render_template('history.html', logs=logs)

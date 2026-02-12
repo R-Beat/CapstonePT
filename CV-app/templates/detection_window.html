@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Equipment Detection Window</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #1a1a1a;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .detection-container {
+            display: flex;
+            height: 100vh;
+            gap: 0;
+        }
+
+        .video-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #000;
+            position: relative;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            font-size: 18px;
+            font-weight: 600;
+            z-index: 10;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        .video-wrapper {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #000;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #camera {
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+            display: block;
+        }
+
+        #overlay-canvas {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            max-width: 100%;
+            max-height: 100%;
+            cursor: crosshair;
+        }
+
+        .detection-status {
+            padding: 15px 20px;
+            background: #2d2d2d;
+            color: #fff;
+            border-top: 1px solid #444;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .detection-status.detecting {
+            background: #1a3a1a;
+            border-top-color: #4caf50;
+        }
+
+        .fps-counter {
+            font-family: monospace;
+            color: #4caf50;
+            font-size: 12px;
+        }
+
+        .controls {
+            padding: 15px 20px;
+            background: #2d2d2d;
+            border-top: 1px solid #444;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-capture {
+            background: #4caf50;
+            color: white;
+        }
+
+        .btn-capture:hover {
+            background: #45a049;
+        }
+
+        .btn-capture:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .btn-close {
+            background: #f44336;
+            color: white;
+        }
+
+        .btn-close:hover {
+            background: #da190b;
+        }
+
+        .btn-clear {
+            background: #ff9800;
+            color: white;
+        }
+
+        .btn-clear:hover {
+            background: #e68900;
+        }
+
+        .sidebar {
+            width: 280px;
+            background: #2d2d2d;
+            border-left: 1px solid #444;
+            display: flex;
+            flex-direction: column;
+            color: white;
+            overflow: hidden;
+        }
+
+        .sidebar-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 15px;
+            font-weight: 600;
+            border-bottom: 1px solid #444;
+        }
+
+        .detected-items-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .detected-item {
+            background: #3d3d3d;
+            border-left: 4px solid #4caf50;
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 3px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .detected-item.removing {
+            animation: slideOut 0.3s ease;
+        }
+
+        @keyframes slideOut {
+            to {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+        }
+
+        .item-name {
+            font-weight: 500;
+            flex: 1;
+        }
+
+        .item-count {
+            background: #4caf50;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            min-width: 25px;
+            text-align: center;
+        }
+
+        .item-remove-btn {
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 11px;
+            margin-left: 8px;
+            transition: all 0.2s;
+        }
+
+        .item-remove-btn:hover {
+            background: #da190b;
+        }
+
+        .no-items {
+            padding: 20px;
+            text-align: center;
+            color: #888;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .no-items-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+            opacity: 0.5;
+        }
+
+        .sidebar-stats {
+            border-top: 1px solid #444;
+            padding: 10px;
+            background: #1a1a1a;
+            font-size: 12px;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            color: #aaa;
+        }
+
+        .stat-value {
+            color: #4caf50;
+            font-weight: 600;
+        }
+
+        .capture-feedback {
+            position: fixed;
+            bottom: 20px;
+            right: 300px;
+            background: #4caf50;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 4px;
+            display: none;
+            z-index: 100;
+            animation: slideInUp 0.3s ease;
+        }
+
+        @keyframes slideInUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .capture-feedback.show {
+            display: block;
+        }
+
+        /* Scrollbar styling */
+        .detected-items-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .detected-items-list::-webkit-scrollbar-track {
+            background: #3d3d3d;
+        }
+
+        .detected-items-list::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 4px;
+        }
+
+        .detected-items-list::-webkit-scrollbar-thumb:hover {
+            background: #764ba2;
+        }
+
+        .error-message {
+            position: fixed;
+            top: 20px;
+            right: 300px;
+            background: #f44336;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 4px;
+            display: none;
+            z-index: 100;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .detection-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background: #f44336;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 1s infinite;
+        }
+
+        .detection-indicator.active {
+            background: #4caf50;
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="detection-container">
+        <!-- Video Section -->
+        <div class="video-section">
+            <div class="header">
+                <span class="detection-indicator" id="detectionIndicator"></span>
+                Equipment Detection System
+            </div>
+            <div class="video-wrapper">
+                <video id="camera" autoplay muted playsinline></video>
+                <canvas id="overlay-canvas"></canvas>
+            </div>
+            <div class="detection-status" id="detectionStatus">
+                <span>Ready to detect equipment</span>
+                <span class="fps-counter"><span id="fps">0</span> FPS</span>
+            </div>
+            <div class="controls">
+                <button type="button" class="btn btn-capture" id="captureBtn">📸 Capture & Register</button>
+                <button type="button" class="btn btn-clear" id="clearBtn">🔄 Clear All</button>
+                <button type="button" class="btn btn-close" id="closeBtn">❌ Close Detection</button>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">🎯 Detected Items (<span id="itemCount">0</span>)</div>
+            <div class="detected-items-list" id="detectedItemsList">
+                <div class="no-items">
+                    <div class="no-items-icon">📦</div>
+                    <div>No equipment detected yet</div>
+                </div>
+            </div>
+            <div class="sidebar-stats">
+                <div class="stat-row">
+                    <span>Frames Processed:</span>
+                    <span class="stat-value" id="framesProcessed">0</span>
+                </div>
+                <div class="stat-row">
+                    <span>Detections Found:</span>
+                    <span class="stat-value" id="detectionsFound">0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="capture-feedback" id="captureFeedback">✓ Captured! Registering items...</div>
+    <div class="error-message" id="errorMessage"></div>
+
+    <script>
+        const video = document.getElementById('camera');
+        const canvas = document.getElementById('overlay-canvas');
+        const ctx = canvas.getContext('2d');
+        const captureBtn = document.getElementById('captureBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const closeBtn = document.getElementById('closeBtn');
+        const detectedItemsList = document.getElementById('detectedItemsList');
+        const itemCountDisplay = document.getElementById('itemCount');
+        const detectionStatus = document.getElementById('detectionStatus');
+        const fpsDisplay = document.getElementById('fps');
+        const detectionIndicator = document.getElementById('detectionIndicator');
+
+        let stream = null;
+        let detectedEquipment = {};
+        let lastFrameTime = Date.now();
+        let frameCount = 0;
+        let totalFrames = 0;
+        let totalDetections = 0;
+        let detectionRunning = false;
+
+        // CLASS_TO_EQUIPMENT mapping from Python backend
+        const CLASS_TO_EQUIPMENT = {
+            "graduated_cylinder": "Graduated Cylinder",
+            "beaker": "Beaker",
+            'compass': 'Compass',
+            'digital_balance': 'Digital Balance',
+            'erlenmeyer_flask': 'Erlenmeyer Flask',
+            'funnel': 'Funnel',
+            'horseshoe_magnet': 'Horseshoe Magnet',
+            'test_tube_rack': 'Test Tube Rack',
+            'triple_beam_balance': 'Triple Beam Balance',
+            'tripod': 'Tripod',
+        };
+
+        // Initialize camera
+        async function initCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: 'environment',
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    }
+                });
+                video.srcObject = stream;
+                
+                video.onloadedmetadata = () => {
+                    console.log('Video dimensions:', video.videoWidth, video.videoHeight);
+                    resizeCanvas();
+                    startDetection();
+                };
+
+                window.addEventListener('resize', resizeCanvas);
+            } catch (err) {
+                showError('Camera error: ' + err.message);
+            }
+        }
+
+        function resizeCanvas() {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            const videoWidth = video.videoWidth;
+            const videoHeight = video.videoHeight;
+
+            if (videoWidth && videoHeight) {
+                const scale = Math.min(rect.width / videoWidth, rect.height / videoHeight);
+                canvas.width = videoWidth * scale;
+                canvas.height = videoHeight * scale;
+                canvas.style.transform = `translate(-50%, -50%) scale(${scale})`;
+            }
+        }
+
+        // Start real-time detection
+        function startDetection() {
+            detectionRunning = true;
+            detectFrame();
+        }
+
+        function detectFrame() {
+            if (!detectionRunning) return;
+
+            frameCount++;
+            totalFrames++;
+
+            const canvas_temp = document.createElement('canvas');
+            canvas_temp.width = video.videoWidth;
+            canvas_temp.height = video.videoHeight;
+            const ctx_temp = canvas_temp.getContext('2d');
+            ctx_temp.drawImage(video, 0, 0);
+
+            const imageData = canvas_temp.toDataURL('image/jpeg', 0.7);
+
+            // Send frame to backend for detection
+            fetch('/process_frame', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'image_data=' + encodeURIComponent(imageData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.detected_classes) {
+                    updateDetections(data.detected_classes, data.boxes || []);
+                    drawDetections(data.boxes || []);
+                    totalDetections += Object.keys(data.detected_classes).length;
+                    document.getElementById('detectionsFound').textContent = totalDetections;
+                }
+                updateDetectionStatus();
+                requestAnimationFrame(detectFrame);
+            })
+            .catch(err => {
+                console.error('Detection error:', err);
+                requestAnimationFrame(detectFrame);
+            });
+        }
+
+        function drawDetections(boxes) {
+            // Clear previous drawings
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const scale = canvas.width / video.videoWidth;
+
+            // Draw bounding boxes
+            ctx.strokeStyle = '#4caf50';
+            ctx.lineWidth = 3;
+            ctx.font = 'bold 14px Arial';
+            ctx.fillStyle = '#4caf50';
+
+            boxes.forEach(box => {
+                const x = box.x1 * scale;
+                const y = box.y1 * scale;
+                const w = (box.x2 - box.x1) * scale;
+                const h = (box.y2 - box.y1) * scale;
+
+                // Draw rectangle
+                ctx.strokeRect(x, y, w, h);
+
+                // Draw label background
+                const label = box.label;
+                const textWidth = ctx.measureText(label).width;
+                ctx.fillRect(x, y - 25, textWidth + 10, 25);
+
+                // Draw label text
+                ctx.fillStyle = '#000';
+                ctx.fillText(label, x + 5, y - 8);
+                ctx.strokeStyle = '#4caf50';
+            });
+        }
+
+        function updateDetections(detectedClasses, boxes) {
+            detectedClasses.forEach(cls => {
+                const equipmentName = CLASS_TO_EQUIPMENT[cls];
+                if (equipmentName) {
+                    if (!detectedEquipment[equipmentName]) {
+                        detectedEquipment[equipmentName] = {
+                            count: 1,
+                            detected_at: new Date()
+                        };
+                    }
+                }
+            });
+            updateDetectionsList();
+        }
+
+        function updateDetectionsList() {
+            const items = Object.keys(detectedEquipment);
+            itemCountDisplay.textContent = items.length;
+
+            if (items.length === 0) {
+                detectedItemsList.innerHTML = `
+                    <div class="no-items">
+                        <div class="no-items-icon">📦</div>
+                        <div>No equipment detected yet</div>
+                    </div>
+                `;
+                detectionIndicator.classList.remove('active');
+            } else {
+                detectionIndicator.classList.add('active');
+                detectedItemsList.innerHTML = items.map(item => `
+                    <div class="detected-item" data-item="${item}">
+                        <div class="item-name">✓ ${item}</div>
+                        <div class="item-count">${detectedEquipment[item].count}</div>
+                        <button type="button" class="item-remove-btn" onclick="removeDetectedItem('${item}')">Remove</button>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function removeDetectedItem(item) {
+            const itemEl = document.querySelector(`[data-item="${item}"]`);
+            if (itemEl) {
+                itemEl.classList.add('removing');
+                setTimeout(() => {
+                    delete detectedEquipment[item];
+                    updateDetectionsList();
+                }, 300);
+            }
+        }
+
+        function updateDetectionStatus() {
+            const now = Date.now();
+            if (now - lastFrameTime >= 1000) {
+                fpsDisplay.textContent = frameCount;
+                frameCount = 0;
+                lastFrameTime = now;
+            }
+
+            const detectedCount = Object.keys(detectedEquipment).length;
+            if (detectedCount > 0) {
+                detectionStatus.classList.add('detecting');
+                detectionStatus.querySelector('span').textContent = `✓ Detecting ${detectedCount} equipment item(s)`;
+            }
+        }
+
+        function captureAndRegister() {
+            const items = Object.keys(detectedEquipment);
+            if (items.length === 0) {
+                showError('No equipment detected. Please ensure items are visible to the camera.');
+                return;
+            }
+
+            detectionRunning = false;
+            showCaptureFeedback();
+
+            // Send detected items back to parent window
+            const parentWindow = window.opener || window.parent;
+            if (parentWindow && parentWindow !== window) {
+                parentWindow.postMessage({
+                    type: 'equipmentDetected',
+                    detected_equipment: items
+                }, '*');
+                setTimeout(() => {
+                    window.close();
+                }, 1500);
+            } else {
+                // Fallback: redirect to borrow_return page with detected items
+                const queryString = items.map(item => `detected=${encodeURIComponent(item)}`).join('&');
+                window.location.href = `/borrow_return?${queryString}`;
+            }
+        }
+
+        function clearAllDetections() {
+            detectedEquipment = {};
+            totalDetections = 0;
+            document.getElementById('detectionsFound').textContent = '0';
+            updateDetectionsList();
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function showCaptureFeedback() {
+            const feedback = document.getElementById('captureFeedback');
+            feedback.classList.add('show');
+            setTimeout(() => {
+                feedback.classList.remove('show');
+            }, 2000);
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.classList.add('show');
+            setTimeout(() => {
+                errorDiv.classList.remove('show');
+            }, 5000);
+        }
+
+        // Event listeners
+        captureBtn.addEventListener('click', captureAndRegister);
+        clearBtn.addEventListener('click', clearAllDetections);
+        closeBtn.addEventListener('click', () => {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+            window.close();
+        });
+
+        // Message listener for cross-window communication
+        window.addEventListener('message', (event) => {
+            if (event.data.type === 'equipmentDetected') {
+                // Handle response if needed
+            }
+        });
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', initCamera);
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            detectionRunning = false;
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+        });
+    </script>
+</body>
+</html>

@@ -418,20 +418,21 @@
             </div>
         </form>
 
-        <!-- Camera Capture Section -->
+        <!-- Detection Window Section -->
         <div class="camera-section">
-            <h3>Capture Equipment from Camera</h3>
-            <p>Use your camera to automatically detect equipment items</p>
-            <button type="button" id="start-camera" class="camera-btn">📷 Start Camera</button>
-            <button type="button" id="stop-camera" class="camera-btn" style="background: #6c757d; display:none;">⏹ Stop Camera</button>
-            <br><br>
-            <video id="camera" width="320" height="240" autoplay style="display:none;"></video><br>
-            <canvas id="canvas" width="320" height="240" style="display:none;"></canvas><br>
-            <form id="image-form" method="POST" action="{{ url_for('process_capture') }}">
-                <input type="hidden" name="image_data" id="image_data">
-            </form>
-            <button type="button" id="capture" class="camera-btn" style="display:none;">📸 Capture Image</button>
-            <a href="/" class="back-button">Back</a>
+            <h3>📷 Camera Detection System</h3>
+            <p>Open a dedicated detection window to automatically detect equipment items in real-time</p>
+            <button type="button" id="open-detection" class="camera-btn" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); font-size: 16px; padding: 12px 24px;">
+                🎯 Open Detection Window
+            </button>
+            <p style="margin-top: 15px; color: #666; font-size: 13px;">
+                <strong>How to use:</strong><br>
+                1. Click "Open Detection Window"<br>
+                2. Position the camera to show equipment items<br>
+                3. Real-time detection will display in the sidebar<br>
+                4. Click "Capture & Register" when ready<br>
+                5. Detected items will be added to the transaction
+            </p>
         </div>
     </div>
 
@@ -454,16 +455,10 @@
     </div>
 
     <script>
-        const video = document.getElementById('camera');
-        const canvas = document.getElementById('canvas');
-        const imageForm = document.getElementById('image-form');
-        const imageDataInput = document.getElementById('image_data');
-        const startCameraButton = document.getElementById('start-camera');
-        const stopCameraButton = document.getElementById('stop-camera');
-        const captureButton = document.getElementById('capture');
         const borrowForm = document.getElementById('borrowForm');
+        const openDetectionBtn = document.getElementById('open-detection');
         let itemCount = 0;
-        let stream = null;
+        let detectionWindow = null;
 
         // Build inventory object from Flask template data
         const inventoryData = `{
@@ -548,7 +543,7 @@
             const detectedQuantities = document.querySelectorAll('.detected-equipment-table input[name="quantities"]');
             detectedInputs.forEach((input, idx) => {
                 if (input.value && detectedQuantities[idx]) {
-                    const available = inventory_dict.get(input.value) || 0;
+                    const available = inventory.get(input.value) || 0;
                     const requested = parseInt(detectedQuantities[idx].value) || 0;
                     if (requested > available) {
                         hasWarning = true;
@@ -684,41 +679,94 @@
             borrowForm.submit();
         }
 
+        // Open detection window
+        openDetectionBtn.onclick = function() {
+            detectionWindow = window.open('/detect_equipment', 'DetectionWindow', 
+                'width=1200,height=800,resizable=yes,scrollbars=yes');
+            if (detectionWindow) {
+                detectionWindow.focus();
+            }
+        };
+
+        // Listen for messages from detection window
+        window.addEventListener('message', (event) => {
+            if (event.data.type === 'equipmentDetected' && event.data.detected_equipment) {
+                const detectedEquipment = event.data.detected_equipment;
+                addDetectedEquipment(detectedEquipment);
+                
+                // Close detection window after processing
+                if (detectionWindow && !detectionWindow.closed) {
+                    detectionWindow.close();
+                }
+            }
+        });
+
+        function addDetectedEquipment(equipmentList) {
+            // Clear previous detected items section if it exists
+            const existingDetectedTable = document.querySelector('.detected-equipment-table');
+            if (existingDetectedTable) {
+                existingDetectedTable.parentElement.remove();
+            }
+
+            if (equipmentList.length === 0) {
+                alert('No valid equipment was detected.');
+                return;
+            }
+
+            // Create detected items section
+            const detectedSection = document.createElement('div');
+            detectedSection.innerHTML = `
+                <div class="alert alert-info">
+                    <strong>🔍 Detected Equipment:</strong> ${equipmentList.join(', ')}
+                </div>
+
+                <h3 class="equipment-list-title">Detected Equipment</h3>
+                <table class="detected-equipment-table">
+                    <thead>
+                        <tr>
+                            <th>Equipment</th>
+                            <th>Quantity</th>
+                            <th>Available</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${equipmentList.map(item => `
+                            <tr>
+                                <td>${item}</td>
+                                <td>
+                                    <input type="hidden" name="equipment_names" value="${item}">
+                                    <input type="number" name="quantities" min="1" max="${inventory[item] || 0}" value="1" required class="quantity-input" style="width: 80px;">
+                                </td>
+                                <td>${inventory[item] || 0} available</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+
+                <div class="hr"></div>
+                <h3 class="equipment-list-title">Select Additional Equipment</h3>
+            `;
+
+            // Insert before equipment list
+            const equipmentListDiv = document.getElementById('equipment-list');
+            equipmentListDiv.parentElement.insertBefore(detectedSection, equipmentListDiv);
+
+            updateInventoryStatus();
+            addDetectedItemsListener();
+        }
+
+        function addDetectedItemsListener() {
+            const detectedQuantities = document.querySelectorAll('.detected-equipment-table input[name="quantities"]');
+            detectedQuantities.forEach(input => {
+                input.addEventListener('change', updateInventoryStatus);
+                input.addEventListener('input', updateInventoryStatus);
+            });
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             addEquipmentRow();
             borrowForm.onsubmit = showConfirmation;
         });
-
-        startCameraButton.onclick = async function() {
-            try {
-                stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                video.srcObject = stream;
-                video.style.display = 'block';
-                startCameraButton.style.display = 'none';
-                stopCameraButton.style.display = 'inline-block';
-                captureButton.style.display = 'inline-block';
-            } catch (err) {
-                alert('Error accessing camera: ' + err.message);
-            }
-        };
-
-        stopCameraButton.onclick = function() {
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
-            }
-            video.style.display = 'none';
-            startCameraButton.style.display = 'inline-block';
-            stopCameraButton.style.display = 'none';
-            captureButton.style.display = 'none';
-        };
-
-        captureButton.onclick = function() {
-            const context = canvas.getContext('2d');
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-            const imageData = canvas.toDataURL('image/png');
-            imageDataInput.value = imageData;
-            imageForm.submit();
-        };
     </script>
 </body>
 </html>

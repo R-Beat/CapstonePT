@@ -42,12 +42,31 @@
             font-size: 14px;
             box-sizing: border-box;
         }
-        .form-group input:focus {
+        .form-group select {
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+            background-color: white;
+            cursor: pointer;
+        }
+        .form-group select:focus {
             outline: none;
             border-color: #007bff;
             box-shadow: 0 0 0 3px rgba(0,123,255,0.25);
         }
-        button {
+        .search-controls {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+        .search-controls > div {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
             background-color: #007bff;
             color: white;
             padding: 10px 20px;
@@ -100,14 +119,28 @@
         <h2>Search Student Records</h2>
         <form method="POST">
             <div class="form-group">
-                <label>Student ID:</label>
-                <input type="text" name="student_id" required>
-                <button type="submit">Search</button>
+                <div class="search-controls">
+                    <div>
+                        <label for="search_type">Search By:</label>
+                        <select id="search_type" name="search_type" required>
+                            <option value="id">Student ID</option>
+                            <option value="name">Student Name</option>
+                        </select>
+                    </div>
+                    <div style="flex: 1;">
+                        <label for="search_query">Enter Value:</label>
+                        <input type="text" id="search_query" name="search_query" placeholder="Enter student ID or name" required>
+                    </div>
+                    <button type="submit">Search</button>
+                </div>
             </div>
         </form>
         
+        {% if logs %}
         <table>
             <tr>
+                <th>Student ID</th>
+                <th>Student Name</th>
                 <th>Equipment</th>
                 <th>Action</th>
                 <th>Quantity</th>
@@ -116,12 +149,19 @@
             {% for row in logs %}
                 <tr>
                     <td>{{ row[0] }}</td>
-                    <td>{{ row[1] }}</td>
+                    <td>{{ row[1] if row[1] else 'Unknown' }}</td>
                     <td>{{ row[2] }}</td>
                     <td>{{ row[3] }}</td>
+                    <td>{{ row[4] }}</td>
+                    <td>{{ row[5] }}</td>
                 </tr>
             {% endfor %}
         </table>
+        {% elif search_query %}
+        <div style="padding: 20px; text-align: center; color: #666;">
+            <p>No records found for the given search criteria.</p>
+        </div>
+        {% endif %}
         <a href="/" class="back-button">Back</a>
     </div>
 </body>
